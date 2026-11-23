@@ -1,0 +1,10 @@
+{
+  "appId": "com.velonet.cards",
+  "appName": "بطاقات الإنترنت",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true,
+    "allowNavigation": ["10.*", "192.168.*"]
+  }
+}
