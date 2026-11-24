@@ -1,2043 +1,799 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" class="dark">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>مُقطّع وعارض بطاقات الإنترنت - يعمل 100% بدون إنترنت</title>
-
+  <title>مُقطّع وعارض بطاقات الإنترنت</title>
+  <script src="./pdf.min.js"></script>
   <style>
     :root {
-      --bg-main: #f1f5f9;
-      --bg-card: #ffffff;
-      --bg-elevated: #f8fafc;
-      --bg-input: #ffffff;
-      --text-primary: #0f172a;
-      --text-secondary: #334155;
-      --text-muted: #64748b;
-      --border-color: #cbd5e1;
-      --accent: #0d9488;
-      --accent-hover: #0f766e;
-      --accent-soft: rgba(13, 148, 136, 0.12);
-      --danger: #dc2626;
-      --danger-soft: rgba(220, 38, 38, 0.12);
-      --warning: #d97706;
-      --warning-soft: rgba(217, 119, 6, 0.14);
-      --shadow-lg: 0 20px 35px -10px rgba(15, 23, 42, 0.12);
+      --bg: #060b14; --card: #0f172a; --elev: #1e293b; --input: #0b1220;
+      --text: #f8fafc; --muted: #94a3b8; --border: #334155;
+      --accent: #14b8a6; --accent-soft: rgba(20,184,166,0.16);
+      --danger: #ef4444; --danger-soft: rgba(239,68,68,0.16);
+      --warn: #f59e0b; --warn-soft: rgba(245,158,11,0.16);
     }
-
-    html.dark {
-      --bg-main: #060b14;
-      --bg-card: #0f172a;
-      --bg-elevated: #1e293b;
-      --bg-input: #0b1220;
-      --text-primary: #f8fafc;
-      --text-secondary: #cbd5e1;
-      --text-muted: #94a3b8;
-      --border-color: #334155;
-      --accent: #14b8a6;
-      --accent-hover: #0d9488;
-      --accent-soft: rgba(20, 184, 166, 0.16);
-      --danger: #ef4444;
-      --danger-soft: rgba(239, 68, 68, 0.16);
-      --warning: #f59e0b;
-      --warning-soft: rgba(245, 158, 11, 0.15);
-      --shadow-lg: 0 25px 45px -12px rgba(0, 0, 0, 0.65);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    body {
-      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
-      background-color: var(--bg-main);
-      color: var(--text-primary);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      transition: background-color 0.25s ease, color 0.25s ease;
-    }
-
-    .hidden { display: none !important; }
-
-    /* ================= Header ================= */
-    header {
-      background-color: var(--bg-card);
-      border-bottom: 1px solid var(--border-color);
-      padding: 12px 18px;
-      position: sticky;
-      top: 0;
-      z-index: 40;
-    }
-
-    .header-inner {
-      max-width: 1160px;
-      margin: 0 auto;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 0;
-    }
-
-    .brand-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #14b8a6, #0d9488);
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      box-shadow: 0 6px 16px rgba(20, 184, 166, 0.3);
-    }
-
-    .brand-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .brand-title h1 {
-      font-size: 1.02rem;
-      font-weight: 800;
-    }
-
-    .offline-pill {
-      font-size: 0.72rem;
-      font-weight: 800;
-      padding: 3px 10px;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      color: var(--accent);
-      border: 1px solid rgba(20, 184, 166, 0.35);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .offline-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background-color: var(--accent);
-    }
-
-    .header-sub {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      font-family: inherit;
-      font-size: 0.84rem;
-      font-weight: 700;
-      border: 1px solid var(--border-color);
-      background-color: var(--bg-elevated);
-      color: var(--text-primary);
-      padding: 8px 13px;
-      border-radius: 11px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: all 0.18s ease;
-      user-select: none;
-    }
-
-    .btn:hover:not(:disabled) {
-      border-color: var(--accent);
-      transform: translateY(-1px);
-    }
-
-    .btn:active:not(:disabled) {
-      transform: scale(0.98);
-    }
-
-    .btn:disabled {
-      opacity: 0.42;
-      cursor: not-allowed;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #14b8a6, #0d9488);
-      border-color: transparent;
-      color: #ffffff;
-      box-shadow: 0 8px 20px rgba(13, 148, 136, 0.28);
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: linear-gradient(135deg, #0d9488, #0f766e);
-    }
-
-    .btn-connect-gradient {
-      background: linear-gradient(135deg, #2563eb, #0d9488);
-      border-color: transparent;
-      color: #ffffff;
-      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.28);
-    }
-
-    .btn-connect-gradient:hover:not(:disabled) {
-      filter: brightness(1.06);
-    }
-
-    .btn-danger-outline {
-      border-color: rgba(239, 68, 68, 0.45);
-      color: var(--danger);
-      background-color: var(--danger-soft);
-    }
-
-    /* ================= Main Container ================= */
-    main {
-      flex: 1;
-      max-width: 1160px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 18px 14px 32px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* ================= Upload Section ================= */
-    .upload-wrapper {
-      margin: auto;
-      max-width: 600px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .offline-helper-card {
-      background-color: var(--warning-soft);
-      border: 1px solid rgba(245, 158, 11, 0.35);
-      border-radius: 18px;
-      padding: 14px 16px;
-      font-size: 0.84rem;
-      line-height: 1.6;
-    }
-
-    .upload-box {
-      width: 100%;
-      background-color: var(--bg-card);
-      border: 2px dashed var(--border-color);
-      border-radius: 24px;
-      padding: 44px 24px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.25s ease;
-      box-shadow: var(--shadow-lg);
-    }
-
-    .upload-box:hover, .upload-box.drag-active {
-      border-color: var(--accent);
-      background-color: var(--accent-soft);
-    }
-
-    .upload-icon-wrap {
-      width: 72px;
-      height: 72px;
-      margin: 0 auto 18px;
-      border-radius: 20px;
-      background-color: var(--accent-soft);
-      color: var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* ================= Calibration Section ================= */
-    .calibration-grid {
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 18px;
-      align-items: start;
-    }
-
-    @media (max-width: 880px) {
-      .calibration-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .panel {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 22px;
-      padding: 18px;
-      box-shadow: var(--shadow-lg);
-    }
-
-    .preview-wrapper {
-      position: relative;
-      display: inline-block;
-      margin: 0 auto;
-      max-width: 100%;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid var(--border-color);
-      background: #ffffff;
-    }
-
-    #previewCanvas {
-      display: block;
-      max-width: 100%;
-      max-height: 72vh;
-      height: auto;
-    }
-
-    #gridOverlay {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-    }
-
-    .grid-cell-guide {
-      position: absolute;
-      border: 1.5px solid rgba(239, 68, 68, 0.88);
-      background: rgba(239, 68, 68, 0.05);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .grid-cell-num {
-      background: #dc2626;
-      color: #ffffff;
-      font-size: 10px;
-      font-weight: 800;
-      padding: 1px 6px;
-      border-radius: 999px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
-    }
-
-    .form-grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .field-label {
-      display: block;
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--text-secondary);
-      margin-bottom: 5px;
-    }
-
-    .input-control {
-      width: 100%;
-      background-color: var(--bg-input);
-      border: 1px solid var(--border-color);
-      color: var(--text-primary);
-      border-radius: 11px;
-      padding: 9px 11px;
-      font-family: inherit;
-      font-size: 0.92rem;
-      font-weight: 700;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s, background-color 0.3s;
-    }
-
-    .input-control:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-soft);
-    }
-
-    /* ================= Viewer Section ================= */
-    .viewer-container {
-      max-width: 780px;
-      width: 100%;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .status-strip {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 18px;
-      padding: 12px 16px;
-    }
-
-    .status-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 9px;
-      font-size: 0.9rem;
-      font-weight: 700;
-    }
-
-    .badges-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .stat-pill {
-      padding: 3px 10px;
-      border-radius: 999px;
-      font-size: 0.78rem;
-      font-weight: 800;
-    }
-
-    .stat-avail {
-      background: var(--accent-soft);
-      color: var(--accent);
-    }
-
-    .stat-used {
-      background: var(--danger-soft);
-      color: var(--danger);
-    }
-
-    .jump-box {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      padding: 2px 8px;
-      font-size: 0.78rem;
-    }
-
-    .jump-box input {
-      width: 44px;
-      background: transparent;
-      border: none;
-      color: var(--accent);
-      font-weight: 800;
-      text-align: center;
-      font-size: 0.85rem;
-      outline: none;
-    }
-
-    .progress-track {
-      width: 100%;
-      height: 8px;
-      background-color: var(--bg-elevated);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #14b8a6, #0d9488);
-      width: 0%;
-      transition: width 0.25s ease;
-    }
-
-    /* ================= Single Large Card Stage ================= */
-    .card-stage {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 22px;
-      padding: 16px;
-      box-shadow: var(--shadow-lg);
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      overscroll-behavior-x: none;
       touch-action: pan-y;
     }
+    body { font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    .hidden { display: none !important; }
 
-    .card-top-meta {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+    header { background: var(--card); border-bottom: 1px solid var(--border); padding: 10px 16px; position: sticky; top: 0; z-index: 40; }
+    .header-inner { max-width: 1050px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-badge { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg,#14b8a6,#0f766e); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; }
+    .pill { font-size: 0.72rem; font-weight: 700; padding: 2px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(20,184,166,0.35); }
+    .pill.warn { background: var(--warn-soft); color: var(--warn); border-color: rgba(245,158,11,0.35); }
+    .sub { font-size: 0.76rem; color: var(--muted); margin-top: 2px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-    .card-num-badge {
-      background: var(--accent);
-      color: #ffffff;
-      font-weight: 800;
-      font-size: 0.88rem;
-      padding: 4px 14px;
-      border-radius: 999px;
-    }
+    .btn { font: inherit; font-size: 0.84rem; font-weight: 700; border: 1px solid var(--border); background: var(--elev); color: var(--text); padding: 8px 12px; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: 0.15s; }
+    .btn:hover:not(:disabled) { border-color: var(--accent); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: linear-gradient(135deg,#14b8a6,#0d9488); border-color: transparent; color: #fff; }
+    .btn-danger-outline { border-color: rgba(239,68,68,0.45); color: var(--danger); background: var(--danger-soft); }
 
+    main { flex: 1; max-width: 1050px; width: 100%; margin: 0 auto; padding: 14px 14px 28px; display: flex; flex-direction: column; }
+    .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
+
+    .upload-box { margin: auto; max-width: 520px; width: 100%; border: 2px dashed var(--border); border-radius: 22px; padding: 40px 20px; text-align: center; cursor: pointer; background: var(--card); }
+    .upload-box:hover, .upload-box.drag { border-color: var(--accent); background: var(--accent-soft); }
+
+    .cal-grid { display: grid; grid-template-columns: 1fr 310px; gap: 16px; align-items: start; }
+    @media (max-width: 820px) { .cal-grid { grid-template-columns: 1fr; } }
+    .preview-wrap { position: relative; display: inline-block; max-width: 100%; border-radius: 8px; overflow: hidden; background: #fff; }
+    #previewCanvas { display: block; max-width: 100%; max-height: 70vh; height: auto; }
+    #gridOverlay { position: absolute; inset: 0; pointer-events: none; }
+    .cell-guide { position: absolute; border: 1px solid rgba(239,68,68,0.85); display: flex; align-items: center; justify-content: center; }
+    .cell-num { background: #dc2626; color: #fff; font-size: 10px; font-weight: 800; padding: 1px 4px; border-radius: 99px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    label { display: block; font-size: 0.76rem; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+    input, select { width: 100%; background: var(--input); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 8px 10px; font: inherit; font-weight: 700; outline: none; }
+    input:focus, select:focus { border-color: var(--accent); }
+
+    .viewer { max-width: 680px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; touch-action: pan-y; }
+    .status-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; font-size: 0.86rem; font-weight: 700; }
+    .stat { padding: 2px 9px; border-radius: 999px; font-size: 0.76rem; }
+    .track { width: 100%; height: 6px; background: var(--elev); border-radius: 999px; overflow: hidden; }
+    .fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.25s; }
+
+    /* تصغير حجم عرض البطاقة */
+    .card-stage { display: flex; flex-direction: column; align-items: center; padding: 10px 14px; }
+    .card-meta { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .card-frame {
       position: relative;
       width: 100%;
-      max-width: 560px;
-      border-radius: 16px;
+      max-width: 330px;
+      border-radius: 12px;
       overflow: hidden;
-      border: 2px solid var(--border-color);
-      background: #ffffff;
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
-      transition: all 0.25s ease;
+      border: 2px solid var(--border);
+      background: #fff;
+      touch-action: pan-y;
+      user-select: none;
+      -webkit-user-select: none;
     }
-
-    .card-frame.is-used {
-      border-color: var(--danger);
-    }
-
+    .card-frame.is-used { border-color: var(--danger); }
     .card-frame img {
       display: block;
       width: 100%;
-      height: auto;
-      max-height: 44vh;
+      max-height: 205px;
       object-fit: contain;
-      transition: filter 0.25s ease, opacity 0.25s ease;
-    }
-
-    .card-frame.is-used img {
-      filter: grayscale(70%) contrast(88%);
-      opacity: 0.6;
-    }
-
-    /* Cross-Out Stamp Overlay */
-    .used-overlay {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: #fff;
       pointer-events: none;
-      background: rgba(220, 38, 38, 0.14);
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-user-drag: none;
     }
+    .card-frame.is-used img { filter: grayscale(70%); opacity: 0.58; }
 
-    .used-overlay svg.cross-lines {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
+    .used-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; background: rgba(220,38,38,0.12); }
+    .used-overlay svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .stamp { position: relative; z-index: 2; background: rgba(220,38,38,0.95); color: #fff; border: 2px solid #fff; padding: 5px 14px; border-radius: 9px; font-size: 0.86rem; font-weight: 900; transform: rotate(-7deg); text-align: center; }
 
-    .used-stamp-box {
-      position: relative;
-      z-index: 2;
-      background: rgba(220, 38, 38, 0.95);
-      color: #ffffff;
-      border: 3px solid #ffffff;
-      padding: 9px 22px;
-      border-radius: 14px;
-      font-weight: 900;
-      font-size: 1.05rem;
-      transform: rotate(-9deg);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
-      text-align: center;
-      line-height: 1.35;
-    }
-
-    /* ================= Auto-Fill & Router Login Box ================= */
-    .router-panel {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 22px;
-      padding: 16px;
-      box-shadow: var(--shadow-lg);
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .router-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .auto-fill-badge {
-      font-size: 0.75rem;
-      font-weight: 800;
-      padding: 3px 10px;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      color: var(--accent);
-    }
-
-    .cred-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    @media (max-width: 600px) {
-      .cred-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .input-with-copy {
-      display: flex;
-      gap: 6px;
-    }
-
-    .input-with-copy input {
-      direction: ltr;
-      text-align: center;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 1.12rem;
-      letter-spacing: 1px;
-    }
-
-    .copy-btn {
-      padding: 0 14px;
-      font-weight: 800;
-      background: var(--accent-soft);
-      color: var(--accent);
-      border-color: rgba(20, 184, 166, 0.35);
-      flex-shrink: 0;
-    }
-
-    .flash-fill {
-      animation: fillPulse 0.6s ease;
-    }
-
-    @keyframes fillPulse {
-      0% { background-color: rgba(20, 184, 166, 0.35); }
-      100% { background-color: var(--bg-input); }
-    }
-
-    .url-row {
-      display: grid;
-      grid-template-columns: 1fr 110px auto;
-      gap: 8px;
-      align-items: end;
-    }
-
-    @media (max-width: 640px) {
-      .url-row {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .action-buttons-row {
-      display: grid;
-      grid-template-columns: 1.6fr 1fr;
-      gap: 10px;
-    }
-
+    .copy-row { display: flex; gap: 6px; }
+    .copy-row input { direction: ltr; text-align: center; font-family: monospace; font-size: 1.08rem; letter-spacing: 1.2px; }
+    .url-row { display: grid; grid-template-columns: 1fr 90px; gap: 8px; }
+    .act-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 10px; }
+    .nav-row { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
     @media (max-width: 560px) {
-      .action-buttons-row {
-        grid-template-columns: 1fr;
-      }
+      .grid-2, .act-row { grid-template-columns: 1fr; }
+      .card-frame { max-width: 290px; }
+      .card-frame img { max-height: 185px; }
     }
 
-    .btn-connect {
-      padding: 13px 18px;
-      font-size: 1rem;
-      border-radius: 14px;
-    }
+    .modal { position: fixed; inset: 0; background: rgba(2,6,23,0.8); z-index: 60; display: flex; align-items: center; justify-content: center; padding: 14px; }
+    .modal-box { background: var(--card); border: 1px solid var(--border); border-radius: 18px; max-width: 820px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; }
+    .modal-body { padding: 14px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+    .mini { border: 1px solid var(--border); border-radius: 10px; padding: 8px; text-align: center; cursor: pointer; background: var(--elev); }
+    .mini.active { border-color: var(--accent); }
+    .mini.used { border-color: var(--danger); opacity: 0.65; }
 
-    /* ================= Bottom Navigation ================= */
-    .nav-bar {
-      display: grid;
-      grid-template-columns: 1fr 2fr;
-      gap: 12px;
-    }
+    .loader { position: fixed; inset: 0; background: rgba(6,11,20,0.88); z-index: 80; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .spin { width: 42px; height: 42px; border: 4px solid var(--accent-soft); border-top-color: var(--accent); border-radius: 50%; animation: sp 0.8s linear infinite; margin-bottom: 12px; }
+    @keyframes sp { to { transform: rotate(360deg); } }
 
-    .btn-next-big {
-      padding: 16px 20px;
-      font-size: 1.15rem;
-      font-weight: 900;
-      border-radius: 16px;
-    }
-
-    .btn-prev-big {
-      padding: 16px 16px;
-      font-size: 1rem;
-      border-radius: 16px;
-    }
-
-    /* ================= Cards Map Modal ================= */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(2, 6, 23, 0.8);
-      backdrop-filter: blur(4px);
-      z-index: 60;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-
-    .modal-box {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 22px;
-      max-width: 920px;
-      width: 100%;
-      max-height: 86vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .modal-head {
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .modal-body {
-      padding: 16px;
-      overflow-y: auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(125px, 1fr));
-      gap: 10px;
-    }
-
-    .mini-card {
-      border: 2px solid var(--border-color);
-      border-radius: 14px;
-      padding: 8px;
-      text-align: center;
-      cursor: pointer;
-      background: var(--bg-elevated);
-      transition: transform 0.15s, border-color 0.15s;
-    }
-
-    .mini-card:hover {
-      transform: translateY(-2px);
-      border-color: var(--accent);
-    }
-
-    .mini-card.active {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-soft);
-    }
-
-    .mini-card.used {
-      border-color: var(--danger);
-      opacity: 0.72;
-    }
-
-    /* ================= Loading & Toast ================= */
-    .loading-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(6, 11, 20, 0.86);
-      z-index: 80;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #ffffff;
-      text-align: center;
-      padding: 20px;
-    }
-
-    .spinner {
-      width: 48px;
-      height: 48px;
-      border: 4px solid rgba(20, 184, 166, 0.25);
-      border-top-color: #14b8a6;
-      border-radius: 50%;
-      animation: spin 0.85s linear infinite;
-      margin-bottom: 14px;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 22px;
-      left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      background: #0f172a;
-      color: #ffffff;
-      border: 1px solid #334155;
-      padding: 10px 20px;
-      border-radius: 999px;
-      font-size: 0.88rem;
-      font-weight: 700;
-      z-index: 90;
-      opacity: 0;
-      pointer-events: none;
-      transition: all 0.25s ease;
-      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4);
-      max-width: 92vw;
-      text-align: center;
-    }
-
-    .toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--elev); border: 1px solid var(--border); padding: 10px 18px; border-radius: 999px; font-size: 0.85rem; font-weight: 700; z-index: 90; opacity: 0; pointer-events: none; transition: 0.2s; text-align: center; max-width: 92vw; }
+    .toast.show { opacity: 1; }
   </style>
 </head>
 <body>
 
-  <!-- ================= Header ================= -->
   <header>
     <div class="header-inner">
       <div class="brand">
-        <div class="brand-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="5" width="20" height="14" rx="2"/>
-            <line x1="2" y1="10" x2="22" y2="10"/>
-          </svg>
-        </div>
+        <div class="brand-badge">💳</div>
         <div>
-          <div class="brand-title">
-            <h1>مُقطّع وعارض بطاقات الإنترنت</h1>
-            <span class="offline-pill" id="offlineStatusBadge">
-              <span class="offline-dot"></span>
-              <span id="offlineStatusText">يعمل بدون إنترنت ✅</span>
-            </span>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <h1 style="font-size:0.98rem;">مُقطّع وعارض بطاقات الإنترنت</h1>
+            <span class="pill" id="engineBadge">جاري الفحص...</span>
           </div>
-          <p class="header-sub" id="headerSubtitle">ارفع ملف PDF لتقطيع البطاقات وتعبئة الدخول تلقائياً</p>
+          <p class="sub" id="subTitle">ارفع ملف PDF لتقطيع البطاقات وقراءة الأرقام تلقائياً</p>
         </div>
       </div>
-
-      <div class="header-actions">
-        <button id="gridModalBtn" class="btn hidden" title="خريطة جميع البطاقات">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          خريطة البطاقات
-        </button>
-
-        <button id="recalibrateBtn" class="btn hidden" title="تعديل شبكة القص">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/></svg>
-          ضبط الشبكة
-        </button>
-
-        <button id="newFileBtn" class="btn hidden" title="فتح ملف PDF جديد">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          ملف جديد
-        </button>
-
-        <button id="downloadAppBtn" class="btn" title="تحميل نسخة HTML مستقلة تعمل بدون إنترنت">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          حفظ التطبيق (HTML)
-        </button>
-
-        <button id="themeToggleBtn" class="btn" title="تبديل المظهر">
-          <span id="themeIcon">☀️</span>
-        </button>
+      <div class="actions">
+        <button id="mapBtn" class="btn hidden">⊞ خريطة البطاقات</button>
+        <button id="newBtn" class="btn hidden">📄 ملف جديد</button>
       </div>
     </div>
   </header>
 
   <main>
-    <!-- ================= 1. شاشة رفع ملف PDF ================= -->
-    <section id="uploadSection" class="upload-wrapper">
-      <!-- خيار اختياري هادئ لتحميل ملف pdf.min.js يدوياً إذا كان الجهاز أوفلاين بالكامل في أول تشغيل -->
-      <div id="offlineEngineHelper" class="offline-helper-card hidden">
-        <strong style="display: block; margin-bottom: 4px;">تجهيز محرك قراءة ملفات PDF للعمل بدون إنترنت:</strong>
-        <span style="color: var(--text-secondary);">
-          إذا كنت غير متصل بالإنترنت في أول تشغيل وتريد تقطيع ملف PDF جديد، يمكنك اختيار ملف <code>pdf.min.js</code> من جهازك ليُحفظ في ذاكرة التطبيق للأبد:
-        </span>
-        <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
-          <input type="file" id="manualEngineInput" accept=".js" class="hidden" />
-          <button type="button" id="manualEngineBtn" class="btn" style="background: var(--bg-card);">
-            📂 اختيار pdf.min.js من جهازي
-          </button>
-        </div>
-      </div>
-
-      <div id="dropZone" class="upload-box">
-        <input type="file" id="fileInput" accept="application/pdf" class="hidden" />
-        <div class="upload-icon-wrap">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-        </div>
-        <h2 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 8px;">اختر ملف بطاقات الإنترنت (PDF)</h2>
-        <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 20px; line-height: 1.6;">
-          اسحب الملف وأفلته هنا أو اضغط للاختيار.<br>
-          يتم حفظ المحرك والبطاقات في ذاكرة الجهاز للعمل 100% بدون إنترنت.
-        </p>
-        <button type="button" id="selectFileBtn" class="btn btn-primary" style="padding: 12px 26px; font-size: 1rem;">
-          اختيار ملف PDF من الجهاز
-        </button>
-      </div>
+    <!-- 1. رفع الملف -->
+    <section id="uploadSec" class="upload-box">
+      <input type="file" id="fileInput" accept="application/pdf" class="hidden" />
+      <div style="font-size:2.6rem;margin-bottom:12px;">📂</div>
+      <h2 style="font-size:1.25rem;margin-bottom:8px;">اختر ملف بطاقات الإنترنت (PDF)</h2>
+      <p class="sub" style="margin-bottom:18px;line-height:1.6;">اسحب الملف هنا أو اضغط للاختيار. تُحفظ البطاقات محلياً على جهازك وتُقرأ أرقامها بدون إنترنت.</p>
+      <button type="button" id="pickBtn" class="btn btn-primary" style="padding:11px 24px;">اختيار ملف PDF</button>
     </section>
 
-    <!-- ================= 2. شاشة معايرة الشبكة ================= -->
-    <section id="calibrationSection" class="calibration-grid hidden">
-      <div class="panel" style="text-align: center;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 6px;">
-          <span style="font-weight: 800; font-size: 0.95rem;">معاينة حدود القص (من اليمين إلى اليسار صفاً بصف)</span>
-          <span style="font-size: 0.78rem; color: var(--text-muted);">الصفحة الأولى</span>
-        </div>
-        <div class="preview-wrapper">
+    <!-- 2. معايرة التقطيع عند رفع ملف جديد -->
+    <section id="calSec" class="cal-grid hidden">
+      <div class="panel" style="text-align:center;">
+        <p style="font-weight:700;font-size:0.9rem;margin-bottom:10px;">معاينة القص (من اليمين إلى اليسار صفاً بصف)</p>
+        <div class="preview-wrap">
           <canvas id="previewCanvas"></canvas>
           <div id="gridOverlay"></div>
         </div>
       </div>
-
-      <div class="panel" style="display: flex; flex-direction: column; gap: 14px;">
-        <div>
-          <h3 style="font-size: 1.05rem; font-weight: 800;">ضبط شبكة التقطيع</h3>
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 3px;">تأكد أن الخطوط الحمراء تطابق حدود البطاقات تماماً</p>
+      <div class="panel" style="display:flex;flex-direction:column;gap:12px;">
+        <h3 style="font-size:1rem;">إعدادات الشبكة والهوامش</h3>
+        <div class="grid-2">
+          <div><label>الأعمدة</label><input type="number" id="colsIn" value="5" min="1" max="20"></div>
+          <div><label>الصفوف</label><input type="number" id="rowsIn" value="11" min="1" max="30"></div>
+          <div><label>هامش أعلى %</label><input type="number" id="mTop" value="2" min="0" max="40" step="0.5"></div>
+          <div><label>هامش أسفل %</label><input type="number" id="mBot" value="2" min="0" max="40" step="0.5"></div>
+          <div><label>هامش يمين %</label><input type="number" id="mRight" value="2" min="0" max="40" step="0.5"></div>
+          <div><label>هامش يسار %</label><input type="number" id="mLeft" value="2" min="0" max="40" step="0.5"></div>
         </div>
-
-        <div class="form-grid-2">
-          <div>
-            <label class="field-label" for="colsInput">عدد الأعمدة</label>
-            <input type="number" id="colsInput" class="input-control" value="5" min="1" max="20" />
-          </div>
-          <div>
-            <label class="field-label" for="rowsInput">عدد الصفوف</label>
-            <input type="number" id="rowsInput" class="input-control" value="11" min="1" max="30" />
-          </div>
+        <div style="background:var(--elev);padding:10px;border-radius:10px;font-size:0.85rem;display:flex;justify-content:space-between;">
+          <span>إجمالي البطاقات:</span>
+          <strong style="color:var(--accent);" id="totalLbl">55 بطاقة</strong>
         </div>
-
-        <div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <span class="field-label" style="margin: 0;">الهوامش الخارجية (%)</span>
-            <button type="button" id="zeroMarginsBtn" style="background: none; border: none; color: var(--accent); font-size: 0.78rem; font-weight: 700; cursor: pointer;">تصفير الهوامش</button>
-          </div>
-          <div class="form-grid-2">
-            <div>
-              <label class="field-label" for="marginTopInput">أعلى %</label>
-              <input type="number" id="marginTopInput" class="input-control" value="2" min="0" max="40" step="0.5" />
-            </div>
-            <div>
-              <label class="field-label" for="marginBottomInput">أسفل %</label>
-              <input type="number" id="marginBottomInput" class="input-control" value="2" min="0" max="40" step="0.5" />
-            </div>
-            <div>
-              <label class="field-label" for="marginRightInput">يمين %</label>
-              <input type="number" id="marginRightInput" class="input-control" value="2" min="0" max="40" step="0.5" />
-            </div>
-            <div>
-              <label class="field-label" for="marginLeftInput">يسار %</label>
-              <input type="number" id="marginLeftInput" class="input-control" value="2" min="0" max="40" step="0.5" />
-            </div>
-          </div>
-        </div>
-
-        <div style="background: var(--bg-elevated); border-radius: 12px; padding: 12px; font-size: 0.86rem;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-            <span style="color: var(--text-muted);">في كل صفحة:</span>
-            <strong id="cardsPerPageLabel">55 بطاقة</strong>
-          </div>
-          <div style="display: flex; justify-content: space-between;">
-            <span style="color: var(--text-muted);">إجمالي الملف:</span>
-            <strong style="color: var(--accent);" id="totalCardsLabel">55 بطاقة</strong>
-          </div>
-        </div>
-
-        <button type="button" id="startSlicingBtn" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 1rem;">
-          تقطيع الكل وعرض البطاقة الأولى ✂️
-        </button>
+        <button type="button" id="sliceBtn" class="btn btn-primary" style="padding:13px;">تقطيع الكل وعرض البطاقة الأولى ✂️</button>
       </div>
     </section>
 
-    <!-- ================= 3. شاشة عرض البطاقة الواحدة والاتصال ================= -->
-    <section id="viewerSection" class="viewer-container hidden">
-      <!-- شريط التقدم والإحصائيات -->
-      <div class="status-strip">
+    <!-- 3. عرض البطاقة الواحدة -->
+    <section id="viewSec" class="viewer hidden">
+      <div class="panel" style="padding:10px 14px;">
         <div class="status-row">
-          <div>
-            بطاقة <span id="currentIndexLabel" style="color: var(--accent); font-size: 1.08rem;">1</span>
-            من <span id="totalCountLabel">0</span>
-          </div>
-          <div class="badges-group">
-            <span class="stat-pill stat-avail">المتبقية: <span id="remainingCountLabel">0</span></span>
-            <span class="stat-pill stat-used">المشطوبة: <span id="usedCountLabel">0</span></span>
-            <label class="jump-box" title="اكتب رقم البطاقة للانتقال الفوري">
-              <span>رقم:</span>
-              <input type="number" id="jumpCardInput" min="1" value="1" />
-            </label>
+          <span>بطاقة <strong id="curIdxLbl" style="color:var(--accent);">1</strong> من <span id="totIdxLbl">0</span></span>
+          <div style="display:flex;gap:6px;">
+            <span class="stat" style="background:var(--accent-soft);color:var(--accent);">المتبقي: <b id="remLbl">0</b></span>
+            <span class="stat" style="background:var(--danger-soft);color:var(--danger);">المشطوب: <b id="usedLbl">0</b></span>
           </div>
         </div>
-        <div class="progress-track">
-          <div class="progress-fill" id="progressBarFill"></div>
-        </div>
+        <div class="track"><div class="fill" id="progFill"></div></div>
       </div>
 
-      <!-- البطاقة الواحدة الكبيرة في منتصف الشاشة -->
-      <div class="card-stage" id="cardStage">
-        <div class="card-top-meta">
-          <span class="card-num-badge" id="cardBadgeNum">بطاقة #1</span>
-          <span id="cardStateText" style="font-size: 0.82rem; font-weight: 800; color: var(--accent);">● متاحة للتشغيل</span>
+      <div class="panel card-stage">
+        <div class="card-meta">
+          <span class="pill" id="badgeNum" style="background:var(--accent);color:#fff;">بطاقة #1</span>
+          <span id="stateTxt" style="font-size:0.8rem;font-weight:800;color:var(--accent);">● متاحة</span>
         </div>
-
         <div class="card-frame" id="cardFrame">
-          <img id="cardImage" src="" alt="بطاقة الإنترنت" />
+          <img id="cardImg" src="" alt="البطاقة" draggable="false" />
           <div class="used-overlay hidden" id="usedOverlay">
-            <svg class="cross-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
-              <line x1="0" y1="0" x2="100" y2="100" stroke="#dc2626" stroke-width="3.4" />
-              <line x1="100" y1="0" x2="0" y2="100" stroke="#dc2626" stroke-width="3.4" />
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+              <line x1="0" y1="0" x2="100" y2="100" stroke="#dc2626" stroke-width="3.2" />
+              <line x1="100" y1="0" x2="0" y2="100" stroke="#dc2626" stroke-width="3.2" />
             </svg>
-            <div class="used-stamp-box">
-              تم التشغيل والاتصال<br>
-              <span style="font-size: 0.8rem; font-weight: 800;">كرت مشطوب</span>
-            </div>
+            <div class="stamp">تم التشغيل والاتصال<br><small>كرت مشطوب</small></div>
           </div>
         </div>
       </div>
 
-      <!-- لوحة التعبئة التلقائية والاتصال بالراوتر -->
-      <div class="router-panel">
-        <div class="router-header">
-          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <strong style="font-size: 0.95rem;">بيانات الدخول للكرت الحالي</strong>
-            <span class="auto-fill-badge" id="autoFillStatus">✨ تمت التعبئة تلقائياً</span>
+      <div class="panel" style="display:flex;flex-direction:column;gap:9px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <strong style="font-size:0.9rem;">بيانات الدخول</strong>
+            <span class="pill" id="fillBadge">✨ تعبئة تلقائية</span>
           </div>
-          <button type="button" id="reExtractBtn" class="btn" style="padding: 5px 10px; font-size: 0.78rem;">
-            🔍 إعادة قراءة الكرت
-          </button>
+          <button type="button" id="reOcrBtn" class="btn" style="padding:4px 10px;font-size:0.76rem;">🔍 إعادة قراءة الكرت</button>
         </div>
-
-        <div class="cred-grid">
+        <div class="grid-2">
           <div>
-            <label class="field-label" for="usernameInput">اسم المستخدم (Username)</label>
-            <div class="input-with-copy">
-              <input type="text" id="usernameInput" class="input-control" placeholder="اسم المستخدم" autocomplete="off" />
-              <button type="button" id="copyUsernameBtn" class="btn copy-btn" title="نسخ اسم المستخدم">نسخ</button>
+            <label>اسم المستخدم (Username)</label>
+            <div class="copy-row">
+              <input type="text" id="userIn" placeholder="اسم المستخدم" autocomplete="off" />
+              <button type="button" id="copyUser" class="btn">نسخ</button>
             </div>
           </div>
-
           <div>
-            <label class="field-label" for="passwordInput">كلمة المرور (Password)</label>
-            <div class="input-with-copy">
-              <input type="text" id="passwordInput" class="input-control" placeholder="كلمة المرور" autocomplete="off" />
-              <button type="button" id="copyPasswordBtn" class="btn copy-btn" title="نسخ كلمة المرور">نسخ</button>
+            <label>كلمة المرور (Password)</label>
+            <div class="copy-row">
+              <input type="text" id="passIn" placeholder="كلمة المرور" autocomplete="off" />
+              <button type="button" id="copyPass" class="btn">نسخ</button>
             </div>
           </div>
         </div>
-
         <div class="url-row">
           <div>
-            <label class="field-label" for="routerUrlInput">رابط صفحة تسجيل الدخول في الراوتر</label>
-            <input type="url" id="routerUrlInput" class="input-control" dir="ltr" value="http://10.5.50.1/login" placeholder="http://10.5.50.1/login" />
+            <label>رابط تسجيل الدخول في الراوتر</label>
+            <input type="url" id="urlIn" dir="ltr" value="http://10.5.50.1/login" />
           </div>
-
           <div>
-            <label class="field-label" for="httpMethodSelect">الطريقة</label>
-            <select id="httpMethodSelect" class="input-control" dir="ltr">
-              <option value="POST" selected>POST</option>
-              <option value="GET">GET</option>
-            </select>
-          </div>
-
-          <div>
-            <button type="button" id="resetLoginUrlBtn" class="btn" style="height: 41px;" title="استعادة رابط الدخول الافتراضي">
-              /login
-            </button>
+            <label>الطريقة</label>
+            <select id="methodIn" dir="ltr"><option value="POST">POST</option><option value="GET">GET</option></select>
           </div>
         </div>
-
-        <div class="action-buttons-row">
-          <button type="button" id="connectRouterBtn" class="btn btn-connect-gradient btn-connect">
-            اتصال وتشغيل الكرت الآن 🚀
-          </button>
-          <button type="button" id="toggleUsedBtn" class="btn btn-danger-outline btn-connect">
-            شطب الكرت يدوياً ✖
-          </button>
+        <div class="act-row">
+          <button type="button" id="connectBtn" class="btn btn-primary" style="padding:11px;">اتصال وتشغيل الكرت الآن 🚀</button>
+          <button type="button" id="toggleUsedBtn" class="btn btn-danger-outline" style="padding:11px;">شطب الكرت يدوياً ✖</button>
         </div>
       </div>
 
-      <!-- أزرار التنقل بين البطاقات -->
-      <div class="nav-bar">
-        <button type="button" id="prevCardBtn" class="btn btn-prev-big">
-          ➡️ البطاقة السابقة
-        </button>
-        <button type="button" id="nextCardBtn" class="btn btn-primary btn-next-big">
-          البطاقة التالية ⬅️
-        </button>
+      <div class="nav-row">
+        <button type="button" id="prevBtn" class="btn" style="padding:13px;">➡️ السابقة</button>
+        <button type="button" id="nextBtn" class="btn btn-primary" style="padding:13px;font-size:1.02rem;">البطاقة التالية ⬅️</button>
       </div>
     </section>
   </main>
 
-  <!-- ================= نافذة خريطة البطاقات ================= -->
-  <div id="gridModal" class="modal-backdrop hidden">
+  <!-- نافذة الخريطة -->
+  <div id="mapModal" class="modal hidden">
     <div class="modal-box">
-      <div class="modal-head">
-        <strong style="font-size: 1rem;">خريطة جميع البطاقات</strong>
-        <button type="button" id="closeGridModalBtn" class="btn">إغلاق ✖</button>
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+        <strong>خريطة البطاقات</strong>
+        <button type="button" id="closeMap" class="btn">إغلاق ✖</button>
       </div>
-      <div id="cardsGridContainer" class="modal-body"></div>
+      <div id="mapGrid" class="modal-body"></div>
     </div>
   </div>
 
-  <!-- ================= شاشة التحميل ================= -->
-  <div id="loadingOverlay" class="loading-overlay hidden">
-    <div class="spinner"></div>
-    <h3 id="loadingTitle" style="font-size: 1.15rem; margin-bottom: 6px;">جاري المعالجة...</h3>
-    <p id="loadingSub" style="font-size: 0.88rem; color: #cbd5e1;">يرجى الانتظار لحظات</p>
+  <!-- شاشة التحميل -->
+  <div id="loader" class="loader hidden">
+    <div class="spin"></div>
+    <h3 id="loadTitle">جاري المعالجة...</h3>
+    <p id="loadSub" class="sub"></p>
   </div>
 
-  <!-- ================= إشعار سريع ================= -->
   <div id="toast" class="toast"></div>
 
   <script>
-    // =========================================================================
-    // 1. قاعدة البيانات المحلية IndexedDB ('VeloNetOfflineDB_v2')
-    //    تضم مخزنين:
-    //    - 'session': لحفظ البطاقات المقصوصة وموضع التصفح والإعدادات
-    //    - 'engine': لحفظ كود محرك PDF.js والـ Worker للعمل 100% بدون إنترنت على file://
-    // =========================================================================
-    const DB_NAME = 'VeloNetOfflineDB_v2';
-    const DB_VERSION = 1;
-    const STORE_SESSION = 'session';
-    const STORE_ENGINE = 'engine';
+    const $ = id => document.getElementById(id);
+    let pdfDoc = null, fileName = '', cards = [], idx = 0, toastT;
 
-    const PDFJS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-    const WORKER_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const toast = msg => {
+      $('toast').textContent = msg;
+      $('toast').classList.add('show');
+      clearTimeout(toastT);
+      toastT = setTimeout(() => $('toast').classList.remove('show'), 2800);
+    };
 
-    let pdfDoc = null;
-    let currentFileName = '';
-    let cards = [];
-    let currentIndex = 0;
+    const setLoad = (show, t = '', s = '') => {
+      $('loadTitle').textContent = t;
+      $('loadSub').textContent = s;
+      $('loader').classList.toggle('hidden', !show);
+    };
 
-    function openAppDB() {
-      return new Promise((resolve, reject) => {
-        const req = indexedDB.open(DB_NAME, DB_VERSION);
-        req.onupgradeneeded = (e) => {
-          const db = e.target.result;
-          if (!db.objectStoreNames.contains(STORE_SESSION)) {
-            db.createObjectStore(STORE_SESSION);
+    // منع السحب الأفقي لليمين واليسار على البطاقة
+    $('cardFrame').addEventListener('dragstart', e => e.preventDefault());
+    let touchStartX = 0, touchStartY = 0;
+    $('cardFrame').addEventListener('touchstart', e => {
+      if (e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+    $('cardFrame').addEventListener('touchmove', e => {
+      if (e.touches.length === 1) {
+        const dx = Math.abs(e.touches[0].clientX - touchStartX);
+        const dy = Math.abs(e.touches[0].clientY - touchStartY);
+        if (dx > dy) e.preventDefault();
+      }
+    }, { passive: false });
+
+    // ========================================================
+    // قارئ الأرقام البصري المدمج (يعمل 100% بدون إنترنت)
+    // ========================================================
+    const DIGIT_TEMPLATES = (() => {
+      const tpls = [];
+      const c = document.createElement('canvas');
+      c.width = 48; c.height = 48;
+      const ctx = c.getContext('2d', { willReadFrequently: true });
+      const W = 16, H = 24;
+
+      for (let d = 0; d <= 9; d++) {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, 48, 48);
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 30px Arial, Helvetica, Tahoma, sans-serif';
+        ctx.textBaseline = 'top';
+        ctx.fillText(String(d), 8, 6);
+
+        const img = ctx.getImageData(0, 0, 48, 48).data;
+        let minX = 48, minY = 48, maxX = -1, maxY = -1;
+        for (let y = 0; y < 48; y++) {
+          for (let x = 0; x < 48; x++) {
+            if (img[(y * 48 + x) * 4] < 150) {
+              if (x < minX) minX = x; if (x > maxX) maxX = x;
+              if (y < minY) minY = y; if (y > maxY) maxY = y;
+            }
           }
-          if (!db.objectStoreNames.contains(STORE_ENGINE)) {
-            db.createObjectStore(STORE_ENGINE);
+        }
+        const bw = maxX - minX + 1, bh = maxY - minY + 1;
+        const grid = new Float32Array(W * H);
+        for (let gy = 0; gy < H; gy++) {
+          for (let gx = 0; gx < W; gx++) {
+            const sx = minX + Math.min(bw - 1, Math.floor((gx + 0.5) * bw / W));
+            const sy = minY + Math.min(bh - 1, Math.floor((gy + 0.5) * bh / H));
+            grid[gy * W + gx] = img[(sy * 48 + sx) * 4] < 150 ? 1 : 0;
           }
-        };
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-      });
-    }
-
-    async function dbGet(storeName, key) {
-      try {
-        const db = await openAppDB();
-        return await new Promise((resolve) => {
-          const tx = db.transaction(storeName, 'readonly');
-          const req = tx.objectStore(storeName).get(key);
-          req.onsuccess = () => resolve(req.result || null);
-          req.onerror = () => resolve(null);
-        });
-      } catch {
-        return null;
-      }
-    }
-
-    async function dbPut(storeName, key, value) {
-      try {
-        const db = await openAppDB();
-        return await new Promise((resolve) => {
-          const tx = db.transaction(storeName, 'readwrite');
-          tx.objectStore(storeName).put(value, key);
-          tx.oncomplete = () => resolve(true);
-          tx.onerror = () => resolve(false);
-        });
-      } catch {
-        return false;
-      }
-    }
-
-    async function saveSessionToDB() {
-      if (!cards || cards.length === 0) return;
-      await dbPut(STORE_SESSION, 'active_session', {
-        cards,
-        currentIndex,
-        fileName: currentFileName,
-        config: getGridConfig(),
-        savedAt: Date.now()
-      });
-      updateOfflineStatusUI();
-    }
-
-    async function loadSessionFromDB() {
-      return await dbGet(STORE_SESSION, 'active_session');
-    }
-
-    // =========================================================================
-    // 2. تحميل وتخزين محرك PDF.js في IndexedDB للعمل الأوفلاين على file://
-    // =========================================================================
-    function injectScriptCode(codeText) {
-      return new Promise((resolve, reject) => {
-        try {
-          const script = document.createElement('script');
-          script.textContent = codeText;
-          document.head.appendChild(script);
-          resolve(true);
-        } catch (err) {
-          reject(err);
         }
-      });
-    }
-
-    function applyWorkerFromCode(workerCode) {
-      if (typeof pdfjsLib === 'undefined') return;
-      if (workerCode) {
-        const blob = new Blob([workerCode], { type: 'application/javascript' });
-        pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
-      } else {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js';
+        tpls.push({ digit: String(d), aspect: bw / bh, grid });
       }
-    }
+      return tpls;
+    })();
 
-    function loadExternalScript(src) {
-      return new Promise((resolve) => {
-        const s = document.createElement('script');
-        s.src = src;
-        s.onload = () => resolve(true);
-        s.onerror = () => resolve(false);
-        document.head.appendChild(s);
-      });
-    }
+    function readDigitsInRegion(ctx, rx, ry, rw, rh) {
+      rx = Math.floor(rx); ry = Math.floor(ry);
+      rw = Math.max(4, Math.floor(rw)); rh = Math.max(4, Math.floor(rh));
+      const data = ctx.getImageData(rx, ry, rw, rh).data;
 
-    async function initPdfEngineSilently() {
-      // 1) التحقق أولاً من وجود المحرك مخزناً داخل IndexedDB ('engine' store)
-      const cachedEngine = await dbGet(STORE_ENGINE, 'pdfjs_bundle');
-      if (cachedEngine && cachedEngine.pdfMinCode) {
-        await injectScriptCode(cachedEngine.pdfMinCode);
-        if (typeof pdfjsLib !== 'undefined') {
-          applyWorkerFromCode(cachedEngine.pdfWorkerCode || '');
-          updateOfflineStatusUI();
-          return true;
+      const gray = new Uint8Array(rw * rh);
+      let minG = 255, maxG = 0;
+      for (let i = 0; i < rw * rh; i++) {
+        const g = (data[i * 4] * 77 + data[i * 4 + 1] * 150 + data[i * 4 + 2] * 29) >> 8;
+        gray[i] = g;
+        if (g < minG) minG = g;
+        if (g > maxG) maxG = g;
+      }
+      if (maxG - minG < 45) return '';
+      const thresh = Math.min(185, Math.max(105, (minG + maxG) >> 1));
+
+      const bin = new Uint8Array(rw * rh);
+      for (let y = 0; y < rh; y++) {
+        let rowDark = 0;
+        for (let x = 0; x < rw; x++) {
+          if (gray[y * rw + x] < thresh) { bin[y * rw + x] = 1; rowDark++; }
+        }
+        if (rowDark > rw * 0.62) {
+          for (let x = 0; x < rw; x++) bin[y * rw + x] = 0;
         }
       }
 
-      // 2) التحقق من وجود ملف محلي ./pdf.min.js بجانب ملف التطبيق
-      const loadedLocal = await loadExternalScript('./pdf.min.js');
-      if (loadedLocal && typeof pdfjsLib !== 'undefined') {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js';
-        updateOfflineStatusUI();
-        return true;
-      }
+      const vis = new Uint8Array(rw * rh);
+      const blobs = [];
+      const qx = new Int32Array(rw * rh);
+      const qy = new Int32Array(rw * rh);
 
-      // 3) إذا كان الإنترنت متاحاً، نحمّل ملفات المحرك ونخزنها في IndexedDB للأبد
-      if (navigator.onLine) {
-        try {
-          const [minRes, workerRes] = await Promise.all([
-            fetch(PDFJS_CDN),
-            fetch(WORKER_CDN)
-          ]);
-          if (minRes.ok && workerRes.ok) {
-            const pdfMinCode = await minRes.text();
-            const pdfWorkerCode = await workerRes.text();
-            await dbPut(STORE_ENGINE, 'pdfjs_bundle', {
-              pdfMinCode,
-              pdfWorkerCode,
-              version: '3.11.174',
-              cachedAt: Date.now()
-            });
-            await injectScriptCode(pdfMinCode);
-            applyWorkerFromCode(pdfWorkerCode);
-            updateOfflineStatusUI();
-            return true;
+      for (let y = 1; y < rh - 1; y++) {
+        for (let x = 2; x < rw - 2; x++) {
+          const p = y * rw + x;
+          if (!bin[p] || vis[p]) continue;
+          let head = 0, tail = 0;
+          qx[tail] = x; qy[tail] = y; tail++;
+          vis[p] = 1;
+          let minX = x, maxX = x, minY = y, maxY = y;
+
+          while (head < tail) {
+            const cx = qx[head], cy = qy[head]; head++;
+            if (cx < minX) minX = cx; if (cx > maxX) maxX = cx;
+            if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+
+            for (let dy = -1; dy <= 1; dy++) {
+              const ny = cy + dy;
+              if (ny < 0 || ny >= rh) continue;
+              for (let dx = -1; dx <= 1; dx++) {
+                const nx = cx + dx;
+                if (nx < 0 || nx >= rw) continue;
+                const np = ny * rw + nx;
+                if (bin[np] && !vis[np]) {
+                  vis[np] = 1;
+                  qx[tail] = nx; qy[tail] = ny; tail++;
+                }
+              }
+            }
           }
-        } catch {
-          // فشل صامت دون إظهار أي خطأ للمستخدم
-        }
-      }
 
-      // 4) في حال عدم الاتصال في أول تشغيل وعدم وجود ملف محلي: نُظهر فقط خيار التحميل اليدوي الهادئ داخل شاشة الرفع
-      const helper = document.getElementById('offlineEngineHelper');
-      if (helper) helper.classList.remove('hidden');
-      updateOfflineStatusUI();
-      return false;
-    }
-
-    function updateOfflineStatusUI() {
-      const textEl = document.getElementById('offlineStatusText');
-      if (!textEl) return;
-      if (cards.length > 0 && typeof pdfjsLib !== 'undefined') {
-        textEl.textContent = 'محفوظ ويعمل 100% بدون إنترنت ✅';
-      } else if (cards.length > 0) {
-        textEl.textContent = 'البطاقات محفوظة وتعمل بدون إنترنت 💾';
-      } else if (typeof pdfjsLib !== 'undefined') {
-        textEl.textContent = 'جاهز للعمل بدون إنترنت ✅';
-      } else {
-        textEl.textContent = 'وضع عدم الاتصال 📴';
-      }
-    }
-
-    // =========================================================================
-    // 3. مراجع عناصر الواجهة
-    // =========================================================================
-    const uploadSection = document.getElementById('uploadSection');
-    const calibrationSection = document.getElementById('calibrationSection');
-    const viewerSection = document.getElementById('viewerSection');
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    const selectFileBtn = document.getElementById('selectFileBtn');
-    const manualEngineInput = document.getElementById('manualEngineInput');
-    const manualEngineBtn = document.getElementById('manualEngineBtn');
-
-    const previewCanvas = document.getElementById('previewCanvas');
-    const gridOverlay = document.getElementById('gridOverlay');
-    const colsInput = document.getElementById('colsInput');
-    const rowsInput = document.getElementById('rowsInput');
-    const marginTopInput = document.getElementById('marginTopInput');
-    const marginBottomInput = document.getElementById('marginBottomInput');
-    const marginRightInput = document.getElementById('marginRightInput');
-    const marginLeftInput = document.getElementById('marginLeftInput');
-    const zeroMarginsBtn = document.getElementById('zeroMarginsBtn');
-    const cardsPerPageLabel = document.getElementById('cardsPerPageLabel');
-    const totalCardsLabel = document.getElementById('totalCardsLabel');
-    const startSlicingBtn = document.getElementById('startSlicingBtn');
-
-    const currentIndexLabel = document.getElementById('currentIndexLabel');
-    const totalCountLabel = document.getElementById('totalCountLabel');
-    const remainingCountLabel = document.getElementById('remainingCountLabel');
-    const usedCountLabel = document.getElementById('usedCountLabel');
-    const jumpCardInput = document.getElementById('jumpCardInput');
-    const progressBarFill = document.getElementById('progressBarFill');
-
-    const cardStage = document.getElementById('cardStage');
-    const cardBadgeNum = document.getElementById('cardBadgeNum');
-    const cardStateText = document.getElementById('cardStateText');
-    const cardFrame = document.getElementById('cardFrame');
-    const cardImage = document.getElementById('cardImage');
-    const usedOverlay = document.getElementById('usedOverlay');
-
-    const autoFillStatus = document.getElementById('autoFillStatus');
-    const reExtractBtn = document.getElementById('reExtractBtn');
-    const usernameInput = document.getElementById('usernameInput');
-    const passwordInput = document.getElementById('passwordInput');
-    const copyUsernameBtn = document.getElementById('copyUsernameBtn');
-    const copyPasswordBtn = document.getElementById('copyPasswordBtn');
-    const routerUrlInput = document.getElementById('routerUrlInput');
-    const httpMethodSelect = document.getElementById('httpMethodSelect');
-    const resetLoginUrlBtn = document.getElementById('resetLoginUrlBtn');
-    const connectRouterBtn = document.getElementById('connectRouterBtn');
-    const toggleUsedBtn = document.getElementById('toggleUsedBtn');
-
-    const prevCardBtn = document.getElementById('prevCardBtn');
-    const nextCardBtn = document.getElementById('nextCardBtn');
-
-    const gridModalBtn = document.getElementById('gridModalBtn');
-    const recalibrateBtn = document.getElementById('recalibrateBtn');
-    const newFileBtn = document.getElementById('newFileBtn');
-    const downloadAppBtn = document.getElementById('downloadAppBtn');
-    const themeToggleBtn = document.getElementById('themeToggleBtn');
-    const themeIcon = document.getElementById('themeIcon');
-
-    const gridModal = document.getElementById('gridModal');
-    const closeGridModalBtn = document.getElementById('closeGridModalBtn');
-    const cardsGridContainer = document.getElementById('cardsGridContainer');
-
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const loadingTitle = document.getElementById('loadingTitle');
-    const loadingSub = document.getElementById('loadingSub');
-    const toastEl = document.getElementById('toast');
-
-    // =========================================================================
-    // 4. التنبيهات وشاشة التحميل والتفضيلات
-    // =========================================================================
-    let toastTimer = null;
-    function showToast(msg) {
-      toastEl.textContent = msg;
-      toastEl.classList.add('show');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
-    }
-
-    function showLoading(title, sub = '') {
-      loadingTitle.textContent = title;
-      loadingSub.textContent = sub;
-      loadingOverlay.classList.remove('hidden');
-    }
-
-    function hideLoading() {
-      loadingOverlay.classList.add('hidden');
-    }
-
-    function initPreferences() {
-      const savedTheme = localStorage.getItem('velonet_theme') || 'dark';
-      if (savedTheme === 'light') {
-        document.documentElement.classList.remove('dark');
-        themeIcon.textContent = '🌙';
-      } else {
-        document.documentElement.classList.add('dark');
-        themeIcon.textContent = '☀️';
-      }
-
-      // تنظيف أي رابط قديم يحتوي على /status وضبط /login كافتراضي
-      let savedUrl = localStorage.getItem('velonet_router_url');
-      if (!savedUrl || savedUrl.toLowerCase().includes('/status')) {
-        savedUrl = 'http://10.5.50.1/login';
-        localStorage.setItem('velonet_router_url', savedUrl);
-      }
-      routerUrlInput.value = savedUrl;
-
-      const savedMethod = localStorage.getItem('velonet_http_method');
-      if (savedMethod === 'GET' || savedMethod === 'POST') {
-        httpMethodSelect.value = savedMethod;
-      }
-    }
-
-    themeToggleBtn.addEventListener('click', () => {
-      const isDark = document.documentElement.classList.toggle('dark');
-      localStorage.setItem('velonet_theme', isDark ? 'dark' : 'light');
-      themeIcon.textContent = isDark ? '☀️' : '🌙';
-    });
-
-    routerUrlInput.addEventListener('change', () => {
-      const val = routerUrlInput.value.trim();
-      if (val) localStorage.setItem('velonet_router_url', val);
-    });
-
-    httpMethodSelect.addEventListener('change', () => {
-      localStorage.setItem('velonet_http_method', httpMethodSelect.value);
-    });
-
-    resetLoginUrlBtn.addEventListener('click', () => {
-      routerUrlInput.value = 'http://10.5.50.1/login';
-      localStorage.setItem('velonet_router_url', 'http://10.5.50.1/login');
-      showToast('تم ضبط الرابط على http://10.5.50.1/login');
-    });
-
-    // تحميل ملف pdf.min.js يدوياً وحفظه في IndexedDB
-    manualEngineBtn.addEventListener('click', () => manualEngineInput.click());
-    manualEngineInput.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const code = await file.text();
-      await injectScriptCode(code);
-      if (typeof pdfjsLib !== 'undefined') {
-        await dbPut(STORE_ENGINE, 'pdfjs_bundle', {
-          pdfMinCode: code,
-          pdfWorkerCode: '',
-          cachedAt: Date.now()
-        });
-        pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js';
-        document.getElementById('offlineEngineHelper').classList.add('hidden');
-        updateOfflineStatusUI();
-        showToast('تم حفظ محرك PDF في ذاكرة التطبيق بنجاح!');
-      } else {
-        showToast('الملف المختار ليس ملف pdf.min.js صالحاً');
-      }
-    });
-
-    // =========================================================================
-    // 5. رفع ملف PDF ومعايرة الشبكة (من اليمين إلى اليسار صفاً بصف)
-    // =========================================================================
-    selectFileBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      fileInput.click();
-    });
-
-    dropZone.addEventListener('click', () => fileInput.click());
-
-    dropZone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropZone.classList.add('drag-active');
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.classList.remove('drag-active');
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('drag-active');
-      const file = e.dataTransfer.files[0];
-      if (file && file.type === 'application/pdf') {
-        handlePdfUpload(file);
-      } else {
-        showToast('يرجى اختيار ملف بصيغة PDF فقط');
-      }
-    });
-
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) handlePdfUpload(file);
-    });
-
-    function getGridConfig() {
-      return {
-        cols: Math.max(1, parseInt(colsInput.value, 10) || 5),
-        rows: Math.max(1, parseInt(rowsInput.value, 10) || 11),
-        mTop: Math.max(0, parseFloat(marginTopInput.value) || 0),
-        mBottom: Math.max(0, parseFloat(marginBottomInput.value) || 0),
-        mRight: Math.max(0, parseFloat(marginRightInput.value) || 0),
-        mLeft: Math.max(0, parseFloat(marginLeftInput.value) || 0)
-      };
-    }
-
-    async function handlePdfUpload(file) {
-      if (typeof pdfjsLib === 'undefined') {
-        document.getElementById('offlineEngineHelper').classList.remove('hidden');
-        showToast('يرجى الاتصال بالإنترنت مرة واحدة أو اختيار ملف pdf.min.js');
-        return;
-      }
-
-      showLoading('جاري قراءة ملف PDF...', file.name);
-      try {
-        const buffer = await file.arrayBuffer();
-        pdfDoc = await pdfjsLib.getDocument({ data: buffer }).promise;
-        currentFileName = file.name;
-        document.getElementById('headerSubtitle').textContent = `${file.name} (${pdfDoc.numPages} صفحات)`;
-
-        await renderCalibrationPreview();
-        uploadSection.classList.add('hidden');
-        viewerSection.classList.add('hidden');
-        calibrationSection.classList.remove('hidden');
-        newFileBtn.classList.remove('hidden');
-      } catch (err) {
-        console.error(err);
-        showToast('تعذر فتح ملف PDF، تأكد أن الملف سليم');
-      } finally {
-        hideLoading();
-      }
-    }
-
-    async function renderCalibrationPreview() {
-      if (!pdfDoc) return;
-      const page = await pdfDoc.getPage(1);
-      const viewport = page.getViewport({ scale: 1.5 });
-      previewCanvas.width = viewport.width;
-      previewCanvas.height = viewport.height;
-      const ctx = previewCanvas.getContext('2d');
-      await page.render({ canvasContext: ctx, viewport }).promise;
-      drawGridOverlay();
-    }
-
-    function drawGridOverlay() {
-      const { cols, rows, mTop, mBottom, mRight, mLeft } = getGridConfig();
-      const perPage = cols * rows;
-      cardsPerPageLabel.textContent = `${perPage} بطاقة`;
-      totalCardsLabel.textContent = pdfDoc
-        ? `${perPage * pdfDoc.numPages} بطاقة (${pdfDoc.numPages} صفحات)`
-        : `${perPage} بطاقة`;
-
-      gridOverlay.innerHTML = '';
-      const usableW = Math.max(1, 100 - mLeft - mRight);
-      const usableH = Math.max(1, 100 - mTop - mBottom);
-      const cellW = usableW / cols;
-      const cellH = usableH / rows;
-
-      let num = 1;
-      for (let r = 0; r < rows; r++) {
-        // الترقيم والقص من اليمين إلى اليسار صفاً بصف
-        for (let c = cols - 1; c >= 0; c--) {
-          const cell = document.createElement('div');
-          cell.className = 'grid-cell-guide';
-          cell.style.left = `${mLeft + c * cellW}%`;
-          cell.style.top = `${mTop + r * cellH}%`;
-          cell.style.width = `${cellW}%`;
-          cell.style.height = `${cellH}%`;
-
-          const badge = document.createElement('span');
-          badge.className = 'grid-cell-num';
-          badge.textContent = num++;
-          cell.appendChild(badge);
-          gridOverlay.appendChild(cell);
-        }
-      }
-    }
-
-    [colsInput, rowsInput, marginTopInput, marginBottomInput, marginRightInput, marginLeftInput].forEach((inp) => {
-      inp.addEventListener('input', drawGridOverlay);
-    });
-
-    zeroMarginsBtn.addEventListener('click', () => {
-      marginTopInput.value = 0;
-      marginBottomInput.value = 0;
-      marginRightInput.value = 0;
-      marginLeftInput.value = 0;
-      drawGridOverlay();
-    });
-
-    // =========================================================================
-    // 6. استخراج اسم المستخدم وكلمة المرور من طبقة نصوص PDF
-    // =========================================================================
-    function extractCredentialsFromTextItems(items, box) {
-      // استبعاد الشريط الجانبي الأيمن (السعر والسرعة) والشعار العلوي والتذييل السفلي
-      const minX = box.x + box.w * 0.04;
-      const maxX = box.x + box.w * 0.78;
-      const minY = box.y + box.h * 0.26;
-      const maxY = box.y + box.h * 0.88;
-
-      const inside = items
-        .filter((it) => it.x >= minX && it.x <= maxX && it.y >= minY && it.y <= maxY)
-        .sort((a, b) => a.y - b.y);
-
-      const tokens = [];
-      for (const it of inside) {
-        const matches = it.str.match(/[A-Za-z0-9._-]{1,32}/g);
-        if (matches) {
-          for (const m of matches) {
-            if (!/^(velonet|mbps|hr|hrs)$/i.test(m)) {
-              tokens.push({ val: m, y: it.y });
+          const bw = maxX - minX + 1, bh = maxY - minY + 1;
+          if (bh >= rh * 0.28 && bh <= rh * 0.88 && bw >= 3 && bw <= rh * 1.4 && minX > 2 && maxX < rw - 3) {
+            if (bw / bh > 0.92) {
+              const mid = Math.floor((minX + maxX) / 2);
+              blobs.push({ minX, maxX: mid, minY, maxY });
+              blobs.push({ minX: mid + 1, maxX, minY, maxY });
+            } else {
+              blobs.push({ minX, maxX, minY, maxY });
             }
           }
         }
       }
 
-      return {
-        username: tokens[0] ? tokens[0].val : '',
-        password: tokens[1] ? tokens[1].val : ''
-      };
+      blobs.sort((a, b) => a.minX - b.minX);
+      const W = 16, H = 24;
+      let result = '';
+
+      for (const b of blobs) {
+        const bw = b.maxX - b.minX + 1, bh = b.maxY - b.minY + 1;
+        const aspect = bw / bh;
+        const grid = new Float32Array(W * H);
+
+        for (let gy = 0; gy < H; gy++) {
+          for (let gx = 0; gx < W; gx++) {
+            const sx = b.minX + Math.min(bw - 1, Math.floor((gx + 0.5) * bw / W));
+            const sy = b.minY + Math.min(bh - 1, Math.floor((gy + 0.5) * bh / H));
+            grid[gy * W + gx] = bin[sy * rw + sx];
+          }
+        }
+
+        let bestDigit = '', bestScore = -999;
+        for (const tpl of DIGIT_TEMPLATES) {
+          let inter = 0, union = 0;
+          for (let k = 0; k < W * H; k++) {
+            if (grid[k] || tpl.grid[k]) {
+              union++;
+              if (grid[k] && tpl.grid[k]) inter++;
+            }
+          }
+          const iou = union ? inter / union : 0;
+          const aspectPenalty = Math.abs(aspect - tpl.aspect) * 0.45;
+          const score = iou - aspectPenalty;
+          if (score > bestScore) {
+            bestScore = score;
+            bestDigit = tpl.digit;
+          }
+        }
+        if (bestScore > 0.25) result += bestDigit;
+      }
+
+      return result;
     }
 
-    // =========================================================================
-    // 7. تقطيع جميع البطاقات في كل الصفحات بدقة 2.5x وحفظها في IndexedDB
-    // =========================================================================
-    startSlicingBtn.addEventListener('click', sliceAllPages);
+    function extractFromCanvas(canvas) {
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const w = canvas.width, h = canvas.height;
+      const user = readDigitsInRegion(ctx, w * 0.04, h * 0.30, w * 0.54, h * 0.24);
+      const pass = readDigitsInRegion(ctx, w * 0.04, h * 0.53, w * 0.54, h * 0.24);
+      return { user, pass };
+    }
 
-    async function sliceAllPages() {
-      if (!pdfDoc) return;
-      const { cols, rows, mTop, mBottom, mRight, mLeft } = getGridConfig();
-      const totalPages = pdfDoc.numPages;
-      const sliced = [];
-      const scale = 2.5;
+    function extractFromDataUrl(dataUrl) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+          const c = document.createElement('canvas');
+          c.width = img.naturalWidth || img.width;
+          c.height = img.naturalHeight || img.height;
+          c.getContext('2d').drawImage(img, 0, 0);
+          resolve(extractFromCanvas(c));
+        };
+        img.onerror = () => resolve({ user: '', pass: '' });
+        img.src = dataUrl;
+      });
+    }
 
-      showLoading('جاري تقطيع جميع البطاقات...', 'يتم قص البطاقات واستخراج بيانات الدخول');
+    // ========================================================
+    // قاعدة البيانات المحلية IndexedDB وحفظ محرك PDF أوفلاين
+    // ========================================================
+    const dbOp = (mode, fn) => new Promise(res => {
+      const req = indexedDB.open('VeloNetDB', 1);
+      req.onupgradeneeded = e => e.target.result.createObjectStore('s');
+      req.onsuccess = () => {
+        const tx = req.result.transaction('s', mode);
+        const r = fn(tx.objectStore('s'));
+        tx.oncomplete = () => res(r?.result);
+        tx.onerror = () => res(null);
+      };
+      req.onerror = () => res(null);
+    });
 
-      try {
-        for (let p = 1; p <= totalPages; p++) {
-          loadingSub.textContent = `معالجة صفحة ${p} من ${totalPages}...`;
-          const page = await pdfDoc.getPage(p);
-          const viewport = page.getViewport({ scale });
+    const saveDB = () => dbOp('readwrite', s => s.put({ cards, idx, fileName }, 'session'));
+    const loadDB = () => dbOp('readonly', s => s.get('session'));
 
-          const pageCanvas = document.createElement('canvas');
-          pageCanvas.width = viewport.width;
-          pageCanvas.height = viewport.height;
-          const pageCtx = pageCanvas.getContext('2d');
-          await page.render({ canvasContext: pageCtx, viewport }).promise;
+    const setBadge = (ok, txt) => {
+      $('engineBadge').textContent = txt;
+      $('engineBadge').className = ok ? 'pill' : 'pill warn';
+    };
 
-          let textItems = [];
-          try {
-            const textContent = await page.getTextContent();
-            textItems = textContent.items
-              .map((item) => {
-                const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
-                return {
-                  str: item.str.trim(),
-                  x: tx[4],
-                  y: tx[5]
-                };
-              })
-              .filter((t) => t.str.length > 0);
-          } catch {
-            textItems = [];
+    async function ensurePdfEngine() {
+      if (typeof pdfjsLib !== 'undefined') {
+        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js';
+        }
+        setBadge(true, 'محفوظ ويعمل 100% بدون إنترنت');
+        return true;
+      }
+
+      const cached = await dbOp('readonly', s => s.get('pdfEngine'));
+      if (cached?.lib && cached?.worker) {
+        const sc = document.createElement('script');
+        sc.textContent = cached.lib;
+        document.head.appendChild(sc);
+        pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
+          new Blob([cached.worker], { type: 'application/javascript' })
+        );
+        setBadge(true, 'محفوظ ويعمل 100% بدون إنترنت');
+        return true;
+      }
+
+      if (navigator.onLine) {
+        try {
+          setBadge(false, 'جاري حفظ المحرك للعمل أوفلاين...');
+          const base = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174';
+          const [r1, r2] = await Promise.all([fetch(`${base}/pdf.min.js`), fetch(`${base}/pdf.worker.min.js`)]);
+          if (r1.ok && r2.ok) {
+            const lib = await r1.text(), worker = await r2.text();
+            await dbOp('readwrite', s => s.put({ lib, worker }, 'pdfEngine'));
+            const sc = document.createElement('script');
+            sc.textContent = lib;
+            document.head.appendChild(sc);
+            pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
+              new Blob([worker], { type: 'application/javascript' })
+            );
+            setBadge(true, 'تم حفظ المحرك ويعمل بدون إنترنت');
+            return true;
           }
+        } catch {}
+      }
 
-          const startX = (mLeft / 100) * viewport.width;
-          const startY = (mTop / 100) * viewport.height;
-          const usableW = ((100 - mLeft - mRight) / 100) * viewport.width;
-          const usableH = ((100 - mTop - mBottom) / 100) * viewport.height;
+      setBadge(false, 'اتصل لمرة واحدة لحفظ محرك PDF');
+      return false;
+    }
 
-          const cellW = usableW / cols;
-          const cellH = usableH / rows;
+    // ========================================================
+    // رفع الملف والمعايرة
+    // ========================================================
+    $('pickBtn').onclick = e => { e.stopPropagation(); $('fileInput').click(); };
+    $('uploadSec').onclick = () => $('fileInput').click();
+    $('uploadSec').ondragover = e => { e.preventDefault(); $('uploadSec').classList.add('drag'); };
+    $('uploadSec').ondragleave = () => $('uploadSec').classList.remove('drag');
+    $('uploadSec').ondrop = e => {
+      e.preventDefault(); $('uploadSec').classList.remove('drag');
+      const f = e.dataTransfer.files[0];
+      if (f?.type === 'application/pdf') openPdf(f); else toast('يرجى اختيار ملف PDF');
+    };
+    $('fileInput').onchange = e => { if (e.target.files[0]) openPdf(e.target.files[0]); };
 
-          const cropCanvas = document.createElement('canvas');
-          cropCanvas.width = Math.max(1, Math.round(cellW));
-          cropCanvas.height = Math.max(1, Math.round(cellH));
-          const cropCtx = cropCanvas.getContext('2d');
+    const cfg = () => ({
+      cols: Math.max(1, +$('colsIn').value || 5),
+      rows: Math.max(1, +$('rowsIn').value || 11),
+      t: Math.max(0, +$('mTop').value || 0), b: Math.max(0, +$('mBot').value || 0),
+      r: Math.max(0, +$('mRight').value || 0), l: Math.max(0, +$('mLeft').value || 0)
+    });
 
-          for (let r = 0; r < rows; r++) {
-            for (let c = cols - 1; c >= 0; c--) {
-              const sx = startX + c * cellW;
-              const sy = startY + r * cellH;
+    async function openPdf(file) {
+      const ready = await ensurePdfEngine();
+      if (!ready) return toast('اتصل بالإنترنت لمرة واحدة لحفظ محرك PDF، أو ضع pdf.min.js بجانب الملف');
+      setLoad(true, 'جاري قراءة الملف...', file.name);
+      try {
+        pdfDoc = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+        fileName = file.name;
+        $('subTitle').textContent = `${fileName} (${pdfDoc.numPages} صفحات)`;
+        const page = await pdfDoc.getPage(1);
+        const vp = page.getViewport({ scale: 1.4 });
+        $('previewCanvas').width = vp.width; $('previewCanvas').height = vp.height;
+        await page.render({ canvasContext: $('previewCanvas').getContext('2d'), viewport: vp }).promise;
+        drawGrid();
+        $('uploadSec').classList.add('hidden');
+        $('viewSec').classList.add('hidden');
+        $('calSec').classList.remove('hidden');
+        $('newBtn').classList.remove('hidden');
+      } catch { toast('تعذر فتح الملف'); }
+      setLoad(false);
+    }
 
-              cropCtx.fillStyle = '#ffffff';
-              cropCtx.fillRect(0, 0, cropCanvas.width, cropCanvas.height);
-              cropCtx.drawImage(
-                pageCanvas,
-                sx, sy, cellW, cellH,
-                0, 0, cropCanvas.width, cropCanvas.height
-              );
+    function drawGrid() {
+      const { cols, rows, t, b, r, l } = cfg();
+      $('totalLbl').textContent = `${cols * rows * (pdfDoc?.numPages || 1)} بطاقة`;
+      const ov = $('gridOverlay'); ov.innerHTML = '';
+      const cw = (100 - l - r) / cols, ch = (100 - t - b) / rows;
+      let n = 1;
+      for (let row = 0; row < rows; row++) {
+        for (let col = cols - 1; col >= 0; col--) {
+          const d = document.createElement('div');
+          d.className = 'cell-guide';
+          d.style.cssText = `left:${l + col * cw}%;top:${t + row * ch}%;width:${cw}%;height:${ch}%`;
+          d.innerHTML = `<span class="cell-num">${n++}</span>`;
+          ov.appendChild(d);
+        }
+      }
+    }
+    ['colsIn','rowsIn','mTop','mBot','mRight','mLeft'].forEach(id => $(id).oninput = drawGrid);
 
-              const creds = extractCredentialsFromTextItems(textItems, {
-                x: sx, y: sy, w: cellW, h: cellH
-              });
+    // ========================================================
+    // التقطيع والقراءة التلقائية (نصياً + بصرياً)
+    // ========================================================
+    $('sliceBtn').onclick = async () => {
+      if (!pdfDoc) return;
+      const { cols, rows, t, b, r, l } = cfg();
+      const out = [];
+      setLoad(true, 'جاري تقطيع البطاقات وقراءة الأرقام...', 'يرجى الانتظار');
+      try {
+        for (let p = 1; p <= pdfDoc.numPages; p++) {
+          $('loadSub').textContent = `صفحة ${p} من ${pdfDoc.numPages}`;
+          const page = await pdfDoc.getPage(p);
+          const vp = page.getViewport({ scale: 2.3 });
+          const cvs = document.createElement('canvas');
+          cvs.width = vp.width; cvs.height = vp.height;
+          await page.render({ canvasContext: cvs.getContext('2d'), viewport: vp }).promise;
 
-              sliced.push({
-                index: sliced.length + 1,
-                page: p,
-                dataUrl: cropCanvas.toDataURL('image/jpeg', 0.92),
-                username: creds.username,
-                password: creds.password,
+          let items = [];
+          try {
+            const tc = await page.getTextContent();
+            items = tc.items.map(it => {
+              const m = pdfjsLib.Util.transform(vp.transform, it.transform);
+              return { str: it.str.trim(), x: m[4], y: m[5] };
+            }).filter(i => i.str);
+          } catch {}
+
+          const sx0 = (l / 100) * vp.width, sy0 = (t / 100) * vp.height;
+          const cw = ((100 - l - r) / 100 * vp.width) / cols;
+          const ch = ((100 - t - b) / 100 * vp.height) / rows;
+
+          for (let row = 0; row < rows; row++) {
+            for (let col = cols - 1; col >= 0; col--) {
+              const x = sx0 + col * cw, y = sy0 + row * ch;
+              const c = document.createElement('canvas');
+              c.width = Math.round(cw); c.height = Math.round(ch);
+              c.getContext('2d').drawImage(cvs, x, y, cw, ch, 0, 0, c.width, c.height);
+
+              const tokens = items
+                .filter(i => i.x >= x + cw * 0.04 && i.x <= x + cw * 0.78 && i.y >= y + ch * 0.28 && i.y <= y + ch * 0.86)
+                .sort((a, b) => a.y - b.y)
+                .flatMap(i => (i.str.match(/[A-Za-z0-9]{2,}/g) || []).filter(w => !/^(velonet|mbps|hr|hrs)$/i.test(w)));
+
+              let user = tokens[0] || '';
+              let pass = tokens[1] || '';
+
+              if (!user || !pass) {
+                const visual = extractFromCanvas(c);
+                if (!user) user = visual.user;
+                if (!pass) pass = visual.pass;
+              }
+
+              out.push({
+                index: out.length + 1,
+                img: c.toDataURL('image/jpeg', 0.86),
+                user,
+                pass,
                 used: false
               });
             }
           }
         }
+        cards = out; idx = 0;
+        $('calSec').classList.add('hidden');
+        $('viewSec').classList.remove('hidden');
+        $('mapBtn').classList.remove('hidden');
+        await renderCard();
+        await saveDB();
+        toast(`تم تقطيع وقراءة ${cards.length} بطاقة بنجاح`);
+      } catch { toast('حدث خطأ أثناء التقطيع'); }
+      setLoad(false);
+    };
 
-        cards = sliced;
-        currentIndex = 0;
-
-        calibrationSection.classList.add('hidden');
-        uploadSection.classList.add('hidden');
-        viewerSection.classList.remove('hidden');
-        gridModalBtn.classList.remove('hidden');
-        recalibrateBtn.classList.remove('hidden');
-        newFileBtn.classList.remove('hidden');
-
-        displayCurrentCard();
-        await saveSessionToDB();
-        showToast(`تم تقطيع وحفظ ${cards.length} بطاقة بنجاح!`);
-      } catch (err) {
-        console.error('Slicing error:', err);
-        showToast('حدث خطأ أثناء تقطيع الصفحات، يرجى المحاولة مرة أخرى');
-      } finally {
-        hideLoading();
-      }
-    }
-
-    // =========================================================================
-    // 8. عرض البطاقة الواحدة والتعبئة التلقائية الفورية
-    // =========================================================================
-    function displayCurrentCard() {
+    // ========================================================
+    // عرض البطاقة والتعبئة التلقائية الفورية
+    // ========================================================
+    async function renderCard(forceOcr = false) {
       if (!cards.length) return;
-      if (currentIndex < 0) currentIndex = 0;
-      if (currentIndex >= cards.length) currentIndex = cards.length - 1;
+      idx = Math.max(0, Math.min(idx, cards.length - 1));
+      const c = cards[idx], used = cards.filter(x => x.used).length;
 
-      const card = cards[currentIndex];
-      const usedCount = cards.filter((c) => c.used).length;
-      const remainingCount = cards.length - usedCount;
+      $('curIdxLbl').textContent = idx + 1;
+      $('totIdxLbl').textContent = cards.length;
+      $('remLbl').textContent = cards.length - used;
+      $('usedLbl').textContent = used;
+      $('progFill').style.width = `${((idx + 1) / cards.length) * 100}%`;
+      $('badgeNum').textContent = `بطاقة #${c.index}`;
+      $('cardImg').src = c.img;
 
-      currentIndexLabel.textContent = currentIndex + 1;
-      totalCountLabel.textContent = cards.length;
-      remainingCountLabel.textContent = remainingCount;
-      usedCountLabel.textContent = usedCount;
-      jumpCardInput.value = currentIndex + 1;
-      jumpCardInput.max = cards.length;
+      $('cardFrame').classList.toggle('is-used', c.used);
+      $('usedOverlay').classList.toggle('hidden', !c.used);
+      $('stateTxt').textContent = c.used ? '✖ كرت مشطوب' : '● متاحة';
+      $('stateTxt').style.color = c.used ? 'var(--danger)' : 'var(--accent)';
+      $('toggleUsedBtn').textContent = c.used ? 'إلغاء الشطب ↺' : 'شطب الكرت يدوياً ✖';
 
-      const pct = ((currentIndex + 1) / cards.length) * 100;
-      progressBarFill.style.width = `${pct}%`;
+      $('prevBtn').disabled = idx === 0;
+      $('nextBtn').disabled = idx === cards.length - 1;
 
-      cardBadgeNum.textContent = `بطاقة #${card.index}`;
-      cardImage.src = card.dataUrl;
-
-      // حالة الشطب وختم التشغيل
-      if (card.used) {
-        cardFrame.classList.add('is-used');
-        usedOverlay.classList.remove('hidden');
-        cardStateText.textContent = '✖ كرت مشطوب ومستخدم';
-        cardStateText.style.color = 'var(--danger)';
-        toggleUsedBtn.textContent = 'إلغاء شطب الكرت ↺';
-      } else {
-        cardFrame.classList.remove('is-used');
-        usedOverlay.classList.add('hidden');
-        cardStateText.textContent = '● متاحة للتشغيل';
-        cardStateText.style.color = 'var(--accent)';
-        toggleUsedBtn.textContent = 'شطب الكرت يدوياً ✖';
-      }
-
-      // تعبئة تلقائية فورية لاسم المستخدم وكلمة المرور
-      usernameInput.value = card.username || '';
-      passwordInput.value = card.password || '';
-
-      usernameInput.classList.remove('flash-fill');
-      passwordInput.classList.remove('flash-fill');
-      void usernameInput.offsetWidth;
-      usernameInput.classList.add('flash-fill');
-      passwordInput.classList.add('flash-fill');
-
-      if (card.username || card.password) {
-        autoFillStatus.textContent = '✨ تمت التعبئة تلقائياً';
-      } else {
-        autoFillStatus.textContent = '✍️ أدخل البيانات يدوياً';
-      }
-
-      prevCardBtn.disabled = currentIndex === 0;
-      nextCardBtn.disabled = currentIndex === cards.length - 1;
-    }
-
-    // حفظ أي تعديل يدوي في IndexedDB
-    usernameInput.addEventListener('input', () => {
-      if (cards[currentIndex]) {
-        cards[currentIndex].username = usernameInput.value.trim();
-        saveSessionToDB();
-      }
-    });
-
-    passwordInput.addEventListener('input', () => {
-      if (cards[currentIndex]) {
-        cards[currentIndex].password = passwordInput.value.trim();
-        saveSessionToDB();
-      }
-    });
-
-    reExtractBtn.addEventListener('click', () => {
-      const card = cards[currentIndex];
-      if (!card) return;
-      usernameInput.value = card.username || '';
-      passwordInput.value = card.password || '';
-      usernameInput.classList.remove('flash-fill');
-      passwordInput.classList.remove('flash-fill');
-      void usernameInput.offsetWidth;
-      usernameInput.classList.add('flash-fill');
-      passwordInput.classList.add('flash-fill');
-      showToast(card.username || card.password ? 'تمت إعادة تعبئة بيانات الكرت' : 'لا توجد بيانات نصية محفوظة لهذا الكرت');
-    });
-
-    // =========================================================================
-    // 9. أزرار النسخ السريع والاتصال بالراوتر وشطب الكرت
-    // =========================================================================
-    async function copyText(text, label) {
-      if (!text) {
-        showToast(`خانة ${label} فارغة`);
-        return;
-      }
-      try {
-        await navigator.clipboard.writeText(text);
-        showToast(`تم نسخ ${label}: ${text}`);
-      } catch {
-        const tmp = document.createElement('textarea');
-        tmp.value = text;
-        tmp.style.position = 'fixed';
-        tmp.style.opacity = '0';
-        document.body.appendChild(tmp);
-        tmp.select();
-        document.execCommand('copy');
-        document.body.removeChild(tmp);
-        showToast(`تم نسخ ${label}: ${text}`);
-      }
-    }
-
-    copyUsernameBtn.addEventListener('click', () => copyText(usernameInput.value.trim(), 'اسم المستخدم'));
-    copyPasswordBtn.addEventListener('click', () => copyText(passwordInput.value.trim(), 'كلمة المرور'));
-
-    connectRouterBtn.addEventListener('click', async () => {
-      const url = routerUrlInput.value.trim();
-      const user = usernameInput.value.trim();
-      const pass = passwordInput.value.trim();
-      const method = httpMethodSelect.value;
-
-      if (!url) {
-        showToast('يرجى إدخال رابط صفحة تسجيل الدخول');
-        routerUrlInput.focus();
-        return;
-      }
-
-      if (!user) {
-        showToast('يرجى إدخال اسم المستخدم أولاً');
-        usernameInput.focus();
-        return;
-      }
-
-      if (cards[currentIndex]) {
-        cards[currentIndex].username = user;
-        cards[currentIndex].password = pass;
-        cards[currentIndex].used = true;
-      }
-
-      displayCurrentCard();
-      await saveSessionToDB();
-
-      const form = document.createElement('form');
-      form.method = method;
-      form.action = url;
-      form.target = '_blank';
-      form.style.display = 'none';
-
-      const uField = document.createElement('input');
-      uField.type = 'hidden';
-      uField.name = 'username';
-      uField.value = user;
-      form.appendChild(uField);
-
-      const pField = document.createElement('input');
-      pField.type = 'hidden';
-      pField.name = 'password';
-      pField.value = pass;
-      form.appendChild(pField);
-
-      document.body.appendChild(form);
-      form.submit();
-      document.body.removeChild(form);
-
-      showToast('تم إرسال بيانات الدخول وشطب الكرت!');
-    });
-
-    toggleUsedBtn.addEventListener('click', async () => {
-      if (!cards[currentIndex]) return;
-      cards[currentIndex].used = !cards[currentIndex].used;
-      displayCurrentCard();
-      await saveSessionToDB();
-      showToast(cards[currentIndex].used ? 'تم شطب الكرت' : 'تم إلغاء الشطب');
-    });
-
-    // =========================================================================
-    // 10. التنقل بين البطاقات (أزرار + رقم مباشر + لوحة المفاتيح + اللمس)
-    // =========================================================================
-    prevCardBtn.addEventListener('click', () => {
-      if (currentIndex > 0) {
-        currentIndex--;
-        displayCurrentCard();
-        saveSessionToDB();
-      }
-    });
-
-    nextCardBtn.addEventListener('click', () => {
-      if (currentIndex < cards.length - 1) {
-        currentIndex++;
-        displayCurrentCard();
-        saveSessionToDB();
-      }
-    });
-
-    jumpCardInput.addEventListener('change', () => {
-      const target = parseInt(jumpCardInput.value, 10);
-      if (!isNaN(target) && target >= 1 && target <= cards.length) {
-        currentIndex = target - 1;
-        displayCurrentCard();
-        saveSessionToDB();
-      } else {
-        jumpCardInput.value = currentIndex + 1;
-      }
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (viewerSection.classList.contains('hidden')) return;
-      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-
-      if (e.key === 'ArrowLeft' || e.key === ' ') {
-        e.preventDefault();
-        nextCardBtn.click();
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        prevCardBtn.click();
-      }
-    });
-
-    let touchStartX = 0;
-    cardStage.addEventListener('touchstart', (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
-
-    cardStage.addEventListener('touchend', (e) => {
-      const diffX = e.changedTouches[0].screenX - touchStartX;
-      if (Math.abs(diffX) < 45) return;
-      if (diffX > 0 && currentIndex < cards.length - 1) {
-        currentIndex++;
-        displayCurrentCard();
-        saveSessionToDB();
-      } else if (diffX < 0 && currentIndex > 0) {
-        currentIndex--;
-        displayCurrentCard();
-        saveSessionToDB();
-      }
-    }, { passive: true });
-
-    // =========================================================================
-    // 11. خريطة البطاقات وأزرار الشريط العلوي
-    // =========================================================================
-    gridModalBtn.addEventListener('click', () => {
-      cardsGridContainer.innerHTML = '';
-      cards.forEach((c, idx) => {
-        const item = document.createElement('div');
-        item.className = `mini-card ${idx === currentIndex ? 'active' : ''} ${c.used ? 'used' : ''}`;
-        item.innerHTML = `
-          <div style="font-weight: 800; font-size: 0.9rem; margin-bottom: 4px;">#${c.index}</div>
-          <div style="font-size: 0.74rem; color: ${c.used ? 'var(--danger)' : 'var(--accent)'}; font-weight: 700;">
-            ${c.used ? '✖ مشطوب' : '● متاح'}
-          </div>
-          ${c.username ? `<div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; direction: ltr; font-family: monospace;">${c.username}</div>` : ''}
-        `;
-        item.addEventListener('click', () => {
-          currentIndex = idx;
-          displayCurrentCard();
-          saveSessionToDB();
-          gridModal.classList.add('hidden');
-        });
-        cardsGridContainer.appendChild(item);
-      });
-      gridModal.classList.remove('hidden');
-    });
-
-    closeGridModalBtn.addEventListener('click', () => gridModal.classList.add('hidden'));
-    gridModal.addEventListener('click', (e) => {
-      if (e.target === gridModal) gridModal.classList.add('hidden');
-    });
-
-    recalibrateBtn.addEventListener('click', () => {
-      if (!pdfDoc) {
-        showToast('يرجى اختيار ملف PDF لإعادة ضبط الشبكة');
-        fileInput.click();
-        return;
-      }
-      viewerSection.classList.add('hidden');
-      calibrationSection.classList.remove('hidden');
-      drawGridOverlay();
-    });
-
-    newFileBtn.addEventListener('click', () => {
-      fileInput.value = '';
-      fileInput.click();
-    });
-
-    downloadAppBtn.addEventListener('click', () => {
-      const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'index.html';
-      a.click();
-      URL.revokeObjectURL(a.href);
-      showToast('تم تنزيل نسخة التطبيق المستقلة (index.html)');
-    });
-
-    // =========================================================================
-    // 12. التشغيل التلقائي عند الفتح (بدون أي رسائل خطأ عند انقطاع الإنترنت)
-    // =========================================================================
-    window.addEventListener('DOMContentLoaded', async () => {
-      initPreferences();
-
-      // استرجاع البطاقات المحفوظة في IndexedDB فوراً
-      const savedSession = await loadSessionFromDB();
-      if (savedSession && Array.isArray(savedSession.cards) && savedSession.cards.length > 0) {
-        cards = savedSession.cards;
-        currentIndex = Math.min(Math.max(0, savedSession.currentIndex || 0), cards.length - 1);
-        currentFileName = savedSession.fileName || '';
-        if (savedSession.config) {
-          colsInput.value = savedSession.config.cols || 5;
-          rowsInput.value = savedSession.config.rows || 11;
-          marginTopInput.value = savedSession.config.mTop ?? 2;
-          marginBottomInput.value = savedSession.config.mBottom ?? 2;
-          marginRightInput.value = savedSession.config.mRight ?? 2;
-          marginLeftInput.value = savedSession.config.mLeft ?? 2;
+      if (forceOcr || (!c.user && !c.pass)) {
+        $('fillBadge').textContent = '⏳ جاري قراءة الأرقام...';
+        const visual = await extractFromDataUrl(c.img);
+        if (visual.user || visual.pass) {
+          c.user = visual.user;
+          c.pass = visual.pass;
+          saveDB();
         }
-
-        document.getElementById('headerSubtitle').textContent = currentFileName
-          ? `${currentFileName} (${cards.length} بطاقة محفوظة)`
-          : `${cards.length} بطاقة محفوظة محلياً`;
-
-        uploadSection.classList.add('hidden');
-        calibrationSection.classList.add('hidden');
-        viewerSection.classList.remove('hidden');
-        gridModalBtn.classList.remove('hidden');
-        recalibrateBtn.classList.remove('hidden');
-        newFileBtn.classList.remove('hidden');
-
-        displayCurrentCard();
       }
 
-      // تهيئة محرك PDF.js بصمت من IndexedDB أو الشبكة أو الملف المحلي
-      await initPdfEngineSilently();
+      $('userIn').value = c.user || '';
+      $('passIn').value = c.pass || '';
+      $('fillBadge').textContent = (c.user || c.pass) ? '✨ تمت التعبئة تلقائياً' : '✍️ أدخل البيانات يدوياً';
+    }
+
+    $('reOcrBtn').onclick = async () => {
+      await renderCard(true);
+      toast(cards[idx]?.user ? `تمت القراءة: ${cards[idx].user} / ${cards[idx].pass}` : 'تعذر قراءة الأرقام تلقائياً');
+    };
+
+    $('userIn').oninput = () => { if (cards[idx]) { cards[idx].user = $('userIn').value.trim(); saveDB(); } };
+    $('passIn').oninput = () => { if (cards[idx]) { cards[idx].pass = $('passIn').value.trim(); saveDB(); } };
+
+    const copyVal = async (val, lbl) => {
+      if (!val) return toast(`خانة ${lbl} فارغة`);
+      await navigator.clipboard?.writeText(val);
+      toast(`تم نسخ ${lbl}: ${val}`);
+    };
+    $('copyUser').onclick = () => copyVal($('userIn').value.trim(), 'اسم المستخدم');
+    $('copyPass').onclick = () => copyVal($('passIn').value.trim(), 'كلمة المرور');
+
+    $('connectBtn').onclick = async () => {
+      const url = $('urlIn').value.trim(), user = $('userIn').value.trim(), pass = $('passIn').value.trim();
+      if (!url || !user) return toast('تأكد من إدخال الرابط واسم المستخدم');
+      localStorage.setItem('velonet_url', url);
+      cards[idx].user = user; cards[idx].pass = pass; cards[idx].used = true;
+      await renderCard(); await saveDB();
+
+      const f = document.createElement('form');
+      f.method = $('methodIn').value; f.action = url; f.target = '_blank';
+      [['username', user], ['password', pass]].forEach(([k, v]) => {
+        const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = v; f.appendChild(i);
+      });
+      document.body.appendChild(f); f.submit(); f.remove();
+      toast('تم الإرسال وشطب الكرت');
+    };
+
+    $('toggleUsedBtn').onclick = async () => {
+      cards[idx].used = !cards[idx].used;
+      await renderCard(); await saveDB();
+    };
+
+    $('prevBtn').onclick = async () => { if (idx > 0) { idx--; await renderCard(); saveDB(); } };
+    $('nextBtn').onclick = async () => { if (idx < cards.length - 1) { idx++; await renderCard(); saveDB(); } };
+
+    $('mapBtn').onclick = () => {
+      $('mapGrid').innerHTML = cards.map((c, i) => `
+        <div class="mini ${i === idx ? 'active' : ''} ${c.used ? 'used' : ''}" onclick="jumpCard(${i})">
+          <b>#${c.index}</b><br>
+          <small style="color:${c.used ? 'var(--danger)' : 'var(--accent)'}">${c.used ? 'مشطوب' : 'متاح'}</small>
+        </div>`).join('');
+      $('mapModal').classList.remove('hidden');
+    };
+    window.jumpCard = async i => { idx = i; await renderCard(); saveDB(); $('mapModal').classList.add('hidden'); };
+    $('closeMap').onclick = () => $('mapModal').classList.add('hidden');
+    $('newBtn').onclick = () => { $('fileInput').value = ''; $('fileInput').click(); };
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      ensurePdfEngine();
+      const u = localStorage.getItem('velonet_url');
+      if (u && !u.includes('/status')) $('urlIn').value = u;
+      const saved = await loadDB();
+      if (saved?.cards?.length) {
+        cards = saved.cards; idx = saved.idx || 0; fileName = saved.fileName || '';
+        $('subTitle').textContent = fileName ? `${fileName} (${cards.length} بطاقة محفوظة)` : 'بطاقات محفوظة محلياً';
+        $('uploadSec').classList.add('hidden');
+        $('viewSec').classList.remove('hidden');
+        $('mapBtn').classList.remove('hidden');
+        $('newBtn').classList.remove('hidden');
+        await renderCard();
+      }
     });
   </script>
 </body>
