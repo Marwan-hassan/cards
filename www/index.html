@@ -149,22 +149,22 @@
       </div>
       <div class="actions">
         <button id="mapBtn" class="btn hidden">⊞ خريطة البطاقات</button>
-        <button id="newBtn" class="btn hidden">📄 ملف جديد</button>
+        <button id="clearBtn" class="btn btn-danger-outline hidden">🗑️ إزالة الملف</button>
       </div>
     </div>
   </header>
 
   <main>
-    <!-- 1. رفع الملف -->
+    <!-- 1. شاشة البداية: اختر ملف -->
     <section id="uploadSec" class="upload-box">
       <input type="file" id="fileInput" accept="application/pdf" class="hidden" />
       <div style="font-size:2.6rem;margin-bottom:12px;">📂</div>
       <h2 style="font-size:1.25rem;margin-bottom:8px;">اختر ملف بطاقات الإنترنت (PDF)</h2>
-      <p class="sub" style="margin-bottom:18px;line-height:1.6;">اسحب الملف هنا أو اضغط للاختيار. تُحفظ البطاقات محلياً على جهازك وتُقرأ أرقامها بدون إنترنت.</p>
+      <p class="sub" style="margin-bottom:18px;line-height:1.6;">اسحب الملف هنا أو اضغط للاختيار لتقطيع البطاقات وقراءة أرقامها تلقائياً بدون إنترنت.</p>
       <button type="button" id="pickBtn" class="btn btn-primary" style="padding:11px 24px;">اختيار ملف PDF</button>
     </section>
 
-    <!-- 2. معايرة التقطيع عند رفع ملف جديد -->
+    <!-- 2. معايرة التقطيع عند اختيار ملف -->
     <section id="calSec" class="cal-grid hidden">
       <div class="panel" style="text-align:center;">
         <p style="font-weight:700;font-size:0.9rem;margin-bottom:10px;">معاينة القص (من اليمين إلى اليسار صفاً بصف)</p>
@@ -327,7 +327,7 @@
     }, { passive: false });
 
     // ========================================================
-    // قارئ الأرقام البصري المحسّن (يعزل الإطار الرمادي ويقرأ كل الأرقام)
+    // قارئ الأرقام البصري المحسّن (يعمل 100% بدون إنترنت)
     // ========================================================
     function computeZoneFeatures(grid, W, H) {
       const avgZone = (x0, x1, y0, y1) => {
@@ -427,7 +427,6 @@
       }
       if (maxG - minG < 50) return '';
 
-      // عتبة حبر داكنة لعزل الأرقام السوداء وإهمال الإطار الرمادي للمستطيل
       const thresh = Math.min(138, Math.max(92, Math.round(minG + (maxG - minG) * 0.42)));
 
       const bin = new Uint8Array(rw * rh);
@@ -441,7 +440,6 @@
         }
       }
 
-      // استخراج كل رقم ككتلة متصلة (8-way flood fill)
       const vis = new Uint8Array(rw * rh);
       const rawBlobs = [];
       const qx = new Int32Array(rw * rh);
@@ -491,7 +489,6 @@
 
       if (!rawBlobs.length) return '';
 
-      // حساب الارتفاع الوسيط للأرقام لاستبعاد أي شوائب صغيرة مع الحفاظ على كل الأرقام الحقيقية
       const heights = rawBlobs.map(b => b.bh).sort((a, b) => a - b);
       const medH = heights[Math.floor(heights.length / 2)];
       const blobs = rawBlobs
@@ -581,7 +578,7 @@
     }
 
     // ========================================================
-    // قاعدة البيانات المحلية IndexedDB وحفظ محرك PDF أوفلاين
+    // قاعدة البيانات المحلية IndexedDB (للمحرك أوفلاين + تنظيف الجلسات)
     // ========================================================
     const dbOp = (mode, fn) => new Promise(res => {
       const req = indexedDB.open('VeloNetDB', 1);
@@ -595,8 +592,7 @@
       req.onerror = () => res(null);
     });
 
-    const saveDB = () => dbOp('readwrite', s => s.put({ cards, idx, fileName }, 'session'));
-    const loadDB = () => dbOp('readonly', s => s.get('session'));
+    const clearStoredSession = () => dbOp('readwrite', s => s.delete('session'));
 
     const setBadge = (ok, txt) => {
       $('engineBadge').textContent = txt;
@@ -648,6 +644,31 @@
       return false;
     }
 
+    // إعادة التطبيق لشاشة البداية (اختر ملف)
+    async function resetToStart(showMsg = false) {
+      pdfDoc = null;
+      fileName = '';
+      cards = [];
+      idx = 0;
+      $('fileInput').value = '';
+      $('cardImg').src = '';
+      $('userIn').value = '';
+      $('passIn').value = '';
+      $('subTitle').textContent = 'ارفع ملف PDF لتقطيع البطاقات وقراءة الأرقام تلقائياً';
+
+      $('calSec').classList.add('hidden');
+      $('viewSec').classList.add('hidden');
+      $('mapModal').classList.add('hidden');
+      $('mapBtn').classList.add('hidden');
+      $('clearBtn').classList.add('hidden');
+      $('uploadSec').classList.remove('hidden');
+
+      await clearStoredSession();
+      if (showMsg) toast('تمت إزالة الملف والعودة إلى البداية');
+    }
+
+    $('clearBtn').onclick = () => resetToStart(true);
+
     // ========================================================
     // رفع الملف والمعايرة
     // ========================================================
@@ -685,7 +706,7 @@
         $('uploadSec').classList.add('hidden');
         $('viewSec').classList.add('hidden');
         $('calSec').classList.remove('hidden');
-        $('newBtn').classList.remove('hidden');
+        $('clearBtn').classList.remove('hidden');
       } catch { toast('تعذر فتح الملف'); }
       setLoad(false);
     }
@@ -764,7 +785,6 @@
                 img: c.toDataURL('image/jpeg', 0.90),
                 user,
                 pass,
-                ocrV4: true,
                 used: false
               });
             }
@@ -774,9 +794,9 @@
         $('calSec').classList.add('hidden');
         $('viewSec').classList.remove('hidden');
         $('mapBtn').classList.remove('hidden');
+        $('clearBtn').classList.remove('hidden');
         await renderCard();
-        await saveDB();
-        toast(`تم تقطيع وقراءة ${cards.length} بطاقة بدقة عالية`);
+        toast(`تم تقطيع وقراءة ${cards.length} بطاقة بنجاح`);
       } catch { toast('حدث خطأ أثناء التقطيع'); }
       setLoad(false);
     };
@@ -806,14 +826,12 @@
       $('prevBtn').disabled = idx === 0;
       $('nextBtn').disabled = idx === cards.length - 1;
 
-      if (forceOcr || (!c.ocrV4 && !c.manual) || (!c.user && !c.pass)) {
+      if (forceOcr || (!c.user && !c.pass)) {
         $('fillBadge').textContent = '⏳ جاري قراءة الأرقام...';
         const visual = await extractFromDataUrl(c.img);
         if (visual.user || visual.pass) {
           c.user = visual.user;
           c.pass = visual.pass;
-          c.ocrV4 = true;
-          saveDB();
         }
       }
 
@@ -823,13 +841,12 @@
     }
 
     $('reOcrBtn').onclick = async () => {
-      if (cards[idx]) cards[idx].manual = false;
       await renderCard(true);
       toast(cards[idx]?.user ? `تمت القراءة: ${cards[idx].user} / ${cards[idx].pass}` : 'تعذر قراءة الأرقام تلقائياً');
     };
 
-    $('userIn').oninput = () => { if (cards[idx]) { cards[idx].user = $('userIn').value.trim(); cards[idx].manual = true; saveDB(); } };
-    $('passIn').oninput = () => { if (cards[idx]) { cards[idx].pass = $('passIn').value.trim(); cards[idx].manual = true; saveDB(); } };
+    $('userIn').oninput = () => { if (cards[idx]) cards[idx].user = $('userIn').value.trim(); };
+    $('passIn').oninput = () => { if (cards[idx]) cards[idx].pass = $('passIn').value.trim(); };
 
     const copyVal = async (val, lbl) => {
       if (!val) return toast(`خانة ${lbl} فارغة`);
@@ -843,7 +860,7 @@
       const user = $('userIn').value.trim(), pass = $('passIn').value.trim();
       if (!user) return toast('تأكد من إدخال اسم المستخدم');
       cards[idx].user = user; cards[idx].pass = pass; cards[idx].used = true;
-      await renderCard(); await saveDB();
+      await renderCard();
 
       const f = document.createElement('form');
       f.method = HTTP_METHOD;
@@ -858,11 +875,11 @@
 
     $('toggleUsedBtn').onclick = async () => {
       cards[idx].used = !cards[idx].used;
-      await renderCard(); await saveDB();
+      await renderCard();
     };
 
-    $('prevBtn').onclick = async () => { if (idx > 0) { idx--; await renderCard(); saveDB(); } };
-    $('nextBtn').onclick = async () => { if (idx < cards.length - 1) { idx++; await renderCard(); saveDB(); } };
+    $('prevBtn').onclick = async () => { if (idx > 0) { idx--; await renderCard(); } };
+    $('nextBtn').onclick = async () => { if (idx < cards.length - 1) { idx++; await renderCard(); } };
 
     $('mapBtn').onclick = () => {
       $('mapGrid').innerHTML = cards.map((c, i) => `
@@ -872,24 +889,16 @@
         </div>`).join('');
       $('mapModal').classList.remove('hidden');
     };
-    window.jumpCard = async i => { idx = i; await renderCard(); saveDB(); $('mapModal').classList.add('hidden'); };
+    window.jumpCard = async i => { idx = i; await renderCard(); $('mapModal').classList.add('hidden'); };
     $('closeMap').onclick = () => $('mapModal').classList.add('hidden');
-    $('newBtn').onclick = () => { $('fileInput').value = ''; $('fileInput').click(); };
 
+    // البدء دائماً من شاشة اختيار الملف مع مسح أي ملف قديم
     window.addEventListener('DOMContentLoaded', async () => {
-      ensurePdfEngine();
       $('urlIn').value = ROUTER_URL;
       $('methodIn').value = HTTP_METHOD;
-      const saved = await loadDB();
-      if (saved?.cards?.length) {
-        cards = saved.cards; idx = saved.idx || 0; fileName = saved.fileName || '';
-        $('subTitle').textContent = fileName ? `${fileName} (${cards.length} بطاقة محفوظة)` : 'بطاقات محفوظة محلياً';
-        $('uploadSec').classList.add('hidden');
-        $('viewSec').classList.remove('hidden');
-        $('mapBtn').classList.remove('hidden');
-        $('newBtn').classList.remove('hidden');
-        await renderCard();
-      }
+      localStorage.removeItem('velonet_url');
+      await resetToStart(false);
+      await ensurePdfEngine();
     });
   </script>
 </body>
