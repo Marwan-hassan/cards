@@ -2,4092 +2,923 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f766e" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="دفتر الديون الذكي" />
-  <title>دفتر الديون الذكي</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>مُقطّع وعارض بطاقات الإنترنت</title>
+  <script src="./pdf.min.js"></script>
   <style>
     :root {
-      --primary: #0f766e;
-      --primary-dark: #115e59;
-      --primary-light: #ccfbf1;
-      --primary-soft: #f0fdfa;
-      --danger: #dc2626;
-      --danger-bg: #fef2f2;
-      --danger-border: #fca5a5;
-      --success: #16a34a;
-      --success-bg: #f0fdf4;
-      --success-border: #bbf7d0;
-      --warning: #d97706;
-      --warning-bg: #fffbeb;
-      --warning-border: #fde68a;
-      --bg: #f1f5f9;
-      --card: #ffffff;
-      --text: #0f172a;
-      --muted: #64748b;
-      --border: #e2e8f0;
-      --shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
-      --radius: 14px;
+      --bg: #060b14; --card: #0f172a; --elev: #1e293b; --input: #0b1220;
+      --text: #f8fafc; --muted: #94a3b8; --border: #334155;
+      --accent: #14b8a6; --accent-soft: rgba(20,184,166,0.16);
+      --danger: #ef4444; --danger-soft: rgba(239,68,68,0.16);
+      --warn: #f59e0b; --warn-soft: rgba(245,158,11,0.16);
     }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Arial, sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    [hidden] {
-      display: none !important;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html, body {
-      min-height: 100%;
+      overscroll-behavior-x: none;
+      touch-action: pan-y;
     }
+    body { font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    .hidden { display: none !important; }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
-      line-height: 1.5;
-      overflow-x: hidden;
-    }
+    header { background: var(--card); border-bottom: 1px solid var(--border); padding: 10px 16px; position: sticky; top: 0; z-index: 40; }
+    .header-inner { max-width: 1050px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-badge { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg,#14b8a6,#0f766e); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; }
+    .pill { font-size: 0.72rem; font-weight: 700; padding: 2px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(20,184,166,0.35); }
+    .pill.warn { background: var(--warn-soft); color: var(--warn); border-color: rgba(245,158,11,0.35); }
+    .sub { font-size: 0.76rem; color: var(--muted); margin-top: 2px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-    /* الإشعار العائم */
-    .toast {
-      position: fixed;
-      top: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #0f172a;
-      color: #ffffff;
-      padding: 10px 18px;
-      border-radius: 999px;
-      font-size: 0.86rem;
-      font-weight: 700;
-      z-index: 400;
-      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25);
-      max-width: 92vw;
+    .btn { font: inherit; font-size: 0.84rem; font-weight: 700; border: 1px solid var(--border); background: var(--elev); color: var(--text); padding: 8px 12px; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: 0.15s; }
+    .btn:hover:not(:disabled) { border-color: var(--accent); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: linear-gradient(135deg,#14b8a6,#0d9488); border-color: transparent; color: #fff; }
+    .btn-danger-outline { border-color: rgba(239,68,68,0.45); color: var(--danger); background: var(--danger-soft); }
+
+    main { flex: 1; max-width: 1050px; width: 100%; margin: 0 auto; padding: 14px 14px 28px; display: flex; flex-direction: column; }
+    .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
+
+    .upload-box { margin: auto; max-width: 520px; width: 100%; border: 2px dashed var(--border); border-radius: 22px; padding: 40px 20px; text-align: center; cursor: pointer; background: var(--card); }
+    .upload-box:hover, .upload-box.drag { border-color: var(--accent); background: var(--accent-soft); }
+
+    .cal-grid { display: grid; grid-template-columns: 1fr 310px; gap: 16px; align-items: start; }
+    @media (max-width: 820px) { .cal-grid { grid-template-columns: 1fr; } }
+    .preview-wrap { position: relative; display: inline-block; max-width: 100%; border-radius: 8px; overflow: hidden; background: #fff; }
+    #previewCanvas { display: block; max-width: 100%; max-height: 70vh; height: auto; }
+    #gridOverlay { position: absolute; inset: 0; pointer-events: none; }
+    .cell-guide { position: absolute; border: 1px solid rgba(239,68,68,0.85); display: flex; align-items: center; justify-content: center; }
+    .cell-num { background: #dc2626; color: #fff; font-size: 10px; font-weight: 800; padding: 1px 4px; border-radius: 99px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    label { display: block; font-size: 0.76rem; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+    input, select { width: 100%; background: var(--input); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 8px 10px; font: inherit; font-weight: 700; outline: none; }
+    input:focus, select:focus { border-color: var(--accent); }
+
+    .locked-field {
+      background: #070c16 !important;
+      color: var(--muted) !important;
+      border-color: #1e293b !important;
+      cursor: not-allowed !important;
+      pointer-events: none !important;
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      opacity: 0.85;
+      appearance: none;
+      -webkit-appearance: none;
       text-align: center;
+    }
+
+    .viewer { max-width: 680px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; touch-action: pan-y; }
+    .status-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; font-size: 0.86rem; font-weight: 700; }
+    .stat { padding: 2px 9px; border-radius: 999px; font-size: 0.76rem; }
+    .track { width: 100%; height: 6px; background: var(--elev); border-radius: 999px; overflow: hidden; }
+    .fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.25s; }
+
+    .card-stage { display: flex; flex-direction: column; align-items: center; padding: 10px 14px; }
+    .card-meta { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .card-frame {
+      position: relative;
+      width: 100%;
+      max-width: 330px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid var(--border);
+      background: #fff;
+      touch-action: pan-y;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .card-frame.is-used { border-color: var(--danger); }
+    .card-frame img {
+      display: block;
+      width: 100%;
+      max-height: 205px;
+      object-fit: contain;
+      background: #fff;
       pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.2s ease, transform 0.2s ease;
-    }
-
-    .toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(4px);
-    }
-
-    /* شاشة القفل PIN */
-    .lock-screen {
-      position: fixed;
-      inset: 0;
-      background: linear-gradient(155deg, var(--primary-dark), #0b3f3c);
-      color: #ffffff;
-      z-index: 500;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .lock-box {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 20px;
-      padding: 28px 22px;
-      width: 100%;
-      max-width: 340px;
-      text-align: center;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
-    }
-
-    .lock-box h2 {
-      font-size: 1.25rem;
-      margin: 8px 0 4px;
-    }
-
-    .lock-box p {
-      font-size: 0.84rem;
-      opacity: 0.9;
-      margin-bottom: 16px;
-    }
-
-    .lock-box input {
-      text-align: center;
-      font-size: 1.4rem;
-      letter-spacing: 8px;
-      font-weight: 800;
-      margin-bottom: 12px;
-    }
-
-    .lock-err {
-      color: #fecaca;
-      font-size: 0.82rem;
-      min-height: 20px;
-      margin-top: 8px;
-      font-weight: 700;
-    }
-
-    /* الهيدر المثبت */
-    header {
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      color: #ffffff;
-      padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 14px;
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      box-shadow: 0 2px 12px rgba(15, 23, 42, 0.14);
-    }
-
-    .header-inner {
-      max-width: 820px;
-      margin: 0 auto;
-    }
-
-    .header-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
-    }
-
-    .app-title {
-      font-size: 1.15rem;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
-
-    .header-badges {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .header-pill {
-      background: rgba(255, 255, 255, 0.18);
-      color: #ffffff;
-      padding: 3px 10px;
-      border-radius: 999px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .header-lock-btn {
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.28);
-      color: #ffffff;
-      border-radius: 999px;
-      width: 30px;
-      height: 30px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-
-    .stats-bar {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-    }
-
-    @media (min-width: 600px) {
-      .stats-bar {
-        grid-template-columns: repeat(4, 1fr);
-      }
-    }
-
-    .stat-box {
-      background: rgba(255, 255, 255, 0.13);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 11px;
-      padding: 7px 9px;
-      text-align: center;
-    }
-
-    .stat-label {
-      font-size: 0.72rem;
-      opacity: 0.92;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .stat-val {
-      font-size: 1rem;
-      font-weight: 800;
-      margin-top: 2px;
-      white-space: nowrap;
-    }
-
-    /* الحاوية الرئيسية */
-    .container {
-      max-width: 820px;
-      margin: 0 auto;
-      padding: 12px 14px;
-    }
-
-    .page {
-      display: none;
-    }
-
-    .page.active {
-      display: block;
-    }
-
-    /* البطاقات */
-    .card {
-      background: var(--card);
-      border-radius: var(--radius);
-      padding: 14px;
-      margin-bottom: 12px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border);
-    }
-
-    .card-title {
-      font-size: 0.98rem;
-      font-weight: 800;
-      margin-bottom: 10px;
-      color: var(--primary-dark);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    /* البوت السريع */
-    .bot-box {
-      background: linear-gradient(to left, var(--primary-soft), #ffffff);
-      border: 1.5px solid #99f6e4;
-    }
-
-    .bot-hint {
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin-bottom: 8px;
-      line-height: 1.5;
-    }
-
-    .bot-input-row {
-      display: flex;
-      gap: 8px;
-    }
-
-    input, select, textarea {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      font-size: 0.95rem;
-      outline: none;
-      background: #ffffff;
-      color: var(--text);
-      transition: border-color 0.15s;
-    }
-
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--primary);
-    }
-
-    /* الأزرار */
-    .btn {
-      padding: 10px 14px;
-      border: none;
-      border-radius: 10px;
-      font-size: 0.88rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: transform 0.12s, filter 0.15s, background 0.15s;
-      white-space: nowrap;
-    }
-
-    .btn:active {
-      transform: scale(0.97);
-    }
-
-    .btn:hover {
-      filter: brightness(0.97);
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: #ffffff;
-    }
-
-    .btn-danger {
-      background: var(--danger);
-      color: #ffffff;
-    }
-
-    .btn-danger-outline {
-      background: var(--danger-bg);
-      color: var(--danger);
-      border: 1.5px solid var(--danger-border);
-    }
-
-    .btn-success {
-      background: var(--success);
-      color: #ffffff;
-    }
-
-    .btn-outline {
-      background: #ffffff;
-      color: var(--text);
-      border: 1.5px solid var(--border);
-    }
-
-    .btn-teal-outline {
-      background: var(--primary-soft);
-      color: var(--primary-dark);
-      border: 1.5px solid #99f6e4;
-    }
-
-    .btn-sm {
-      padding: 7px 11px;
-      font-size: 0.8rem;
-      border-radius: 8px;
-    }
-
-    .bot-feedback {
-      margin-top: 10px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      font-size: 0.84rem;
-      display: none;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .bot-feedback.success {
-      display: flex;
-      background: var(--success-bg);
-      color: #15803d;
-      border: 1px solid var(--success-border);
-    }
-
-    .bot-feedback.error {
-      display: flex;
-      background: var(--danger-bg);
-      color: var(--danger);
-      border: 1px solid var(--danger-border);
-    }
-
-    /* شريط البحث ووضع التركيز الكامل */
-    .search-wrap {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .search-wrap input {
-      flex: 1;
-      min-width: 0;
-    }
-
-    body.search-focus-mode {
-      padding-top: 0;
-    }
-
-    body.search-focus-mode #appHeader,
-    body.search-focus-mode #botCard,
-    body.search-focus-mode #pillsRow,
-    body.search-focus-mode #quickToolbar {
-      display: none !important;
-    }
-
-    body.search-focus-mode .search-wrap {
-      position: sticky;
-      top: 0;
-      z-index: 65;
-      background: var(--bg);
-      padding: calc(10px + env(safe-area-inset-top, 0px)) 0 10px;
-      margin-top: -12px;
-      margin-bottom: 10px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    /* فلاتر الزبائن (Pills) */
-    .pills-row {
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      margin-bottom: 10px;
-      scrollbar-width: none;
-    }
-
-    .pills-row::-webkit-scrollbar {
-      display: none;
-    }
-
-    .pill {
-      flex: none;
-      padding: 6px 12px;
-      border-radius: 999px;
-      border: 1.5px solid var(--border);
-      background: #ffffff;
-      color: var(--muted);
-      font-size: 0.8rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: 0.15s;
-    }
-
-    .pill.active {
-      background: var(--primary);
-      color: #ffffff;
-      border-color: var(--primary);
-    }
-
-    /* شريط الأدوات السريعة للزبائن */
-    .quick-toolbar {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 7px;
-      margin-bottom: 12px;
-    }
-
-    .quick-toolbar .btn {
-      padding: 9px 6px;
-      font-size: 0.8rem;
-    }
-
-    /* بطاقة الزبون */
-    .customer-item {
-      background: var(--card);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius);
-      padding: 12px 13px;
-      margin-bottom: 9px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      box-shadow: var(--shadow);
-      transition: border-color 0.15s, background 0.15s;
-    }
-
-    .customer-item.over-limit {
-      background: var(--danger-bg);
-      border: 2px solid var(--danger);
-    }
-
-    .cust-info {
-      flex: 1;
-      min-width: 0;
-      cursor: pointer;
-    }
-
-    .cust-name {
-      font-weight: 800;
-      font-size: 0.98rem;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      flex-wrap: wrap;
-      color: var(--text);
-    }
-
-    .cust-meta {
-      font-size: 0.76rem;
-      color: var(--muted);
-      margin-top: 3px;
-      word-break: break-word;
-    }
-
-    .badges-line {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      margin-top: 5px;
-    }
-
-    .badge {
-      font-size: 0.68rem;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 999px;
-      display: inline-flex;
-      align-items: center;
-    }
-
-    .badge-danger {
-      background: #fee2e2;
-      color: #b91c1c;
-    }
-
-    .badge-warn {
-      background: #fef3c7;
-      color: #b45309;
-    }
-
-    .badge-success {
-      background: #dcfce7;
-      color: #15803d;
-    }
-
-    .badge-info {
-      background: #e0f2fe;
-      color: #0369a1;
-    }
-
-    /* الجانب الأيسر من بطاقة الزبون: المبلغ ثم أيقونات الاتصال والرسالة في أقصى اليسار */
-    .cust-left-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
-    }
-
-    .cust-balance {
-      font-size: 1.04rem;
-      font-weight: 900;
-      white-space: nowrap;
-      text-align: left;
-    }
-
-    .cust-balance.neg {
-      color: var(--danger);
-    }
-
-    .cust-balance.pos {
-      color: var(--success);
-    }
-
-    .cust-balance.neutral {
-      color: var(--primary-dark);
-    }
-
-    .cust-quick-icons {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      flex-shrink: 0;
-    }
-
-    .icon-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      border: 1.5px solid var(--border);
-      background: #f8fafc;
-      color: var(--text);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: 0.15s;
-    }
-
-    .icon-btn:hover {
-      border-color: var(--primary);
-      background: var(--primary-soft);
-    }
-
-    .icon-btn.call-btn {
-      background: #f0fdf4;
-      border-color: #bbf7d0;
-    }
-
-    .icon-btn.msg-btn {
-      background: #f0fdfa;
-      border-color: #99f6e4;
-    }
-
-    /* حقول الجوال ومفتاح الدولة */
-    .phone-field-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .phone-field-row input.phone-num-input {
-      flex: 1;
-      min-width: 0;
-      direction: ltr;
-      text-align: left;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-
-    .phone-field-row select.phone-cc-select {
-      min-width: 150px;
-      width: 150px;
-      flex: 0 0 150px;
-      padding: 10px 8px;
-      font-size: 0.88rem;
-      font-weight: 700;
-    }
-
-    /* شريط استهلاك الحد */
-    .limit-bar-wrap {
-      margin-top: 8px;
-    }
-
-    .limit-bar-meta {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.76rem;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
-
-    .limit-bar {
-      width: 100%;
-      height: 8px;
-      background: var(--border);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    .limit-bar > i {
-      display: block;
-      height: 100%;
-      background: var(--success);
-      border-radius: 999px;
-      transition: width 0.25s ease;
-    }
-
-    .limit-bar.warn > i {
-      background: var(--warning);
-    }
-
-    .limit-bar.danger > i {
-      background: var(--danger);
-    }
-
-    /* مبيعات اليوم */
-    .daily-stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    .daily-stat {
-      border-radius: 11px;
-      padding: 9px 7px;
-      text-align: center;
-    }
-
-    .daily-stat .label {
-      font-size: 0.72rem;
-      font-weight: 700;
-    }
-
-    .daily-stat .val {
-      font-size: 0.98rem;
-      font-weight: 900;
-      margin-top: 3px;
-    }
-
-    /* سجل العمليات */
-    .log-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 6px;
-      border-bottom: 1px solid var(--border);
-      gap: 8px;
-      border-radius: 8px;
-      transition: background 0.15s;
-    }
-
-    .log-item:last-child {
-      border-bottom: none;
-    }
-
-    .log-item.clickable {
-      cursor: pointer;
-    }
-
-    .log-item.clickable:hover {
-      background: #f8fafc;
-    }
-
-    .tag-debt {
-      background: #fee2e2;
-      color: #b91c1c;
-      padding: 2px 7px;
-      border-radius: 6px;
-      font-size: 0.72rem;
-      font-weight: 700;
-    }
-
-    .tag-pay {
-      background: #dcfce7;
-      color: #15803d;
-      padding: 2px 7px;
-      border-radius: 6px;
-      font-size: 0.72rem;
-      font-weight: 700;
-    }
-
-    /* التعديل الجماعي للأرقام والحدود */
-    .bulk-card-item {
-      background: #f8fafc;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 11px;
-      margin-bottom: 10px;
-    }
-
-    .bulk-card-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      gap: 8px;
-    }
-
-    .bulk-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
-    }
-
-    .bulk-field-lbl {
-      font-size: 0.74rem;
-      font-weight: 700;
-      color: var(--muted);
-      margin-bottom: 3px;
-      display: block;
-    }
-
-    /* شريط التنقل السفلي */
-    nav.bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: #ffffff;
-      border-top: 1px solid var(--border);
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      z-index: 60;
-      box-shadow: 0 -2px 12px rgba(15, 23, 42, 0.06);
-      padding-bottom: env(safe-area-inset-bottom, 0px);
-    }
-
-    .nav-btn {
-      background: none;
-      border: none;
-      padding: 9px 4px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      font-size: 0.73rem;
-      font-weight: 700;
-      color: var(--muted);
-      cursor: pointer;
-    }
-
-    .nav-btn.active {
-      color: var(--primary);
-      background: var(--primary-soft);
-    }
-
-    .nav-icon {
-      font-size: 1.2rem;
-    }
-
-    /* النوافذ المنبثقة Modals */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.58);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 14px;
-      z-index: 200;
-    }
-
-    .modal-backdrop.open {
-      display: flex;
-    }
-
-    .modal {
-      background: #ffffff;
-      border-radius: 16px;
-      width: 100%;
-      max-width: 520px;
-      max-height: 90vh;
-      overflow-y: auto;
-      padding: 18px;
-      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.25);
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 14px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .modal-header h3 {
-      font-size: 1.06rem;
-      color: var(--text);
-    }
-
-    .form-group {
-      margin-bottom: 11px;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.83rem;
-      font-weight: 700;
-      margin-bottom: 4px;
-      color: var(--text);
-    }
-
-    .form-err {
-      color: var(--danger);
-      font-size: 0.8rem;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .grid-3 {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 7px;
-    }
-
-    /* أزرار اختيار متعددة (قنوات/أرقام/أسماء متشابهة) */
-    .seg-row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-
-    .seg-btn {
-      flex: 1;
-      padding: 9px 10px;
-      border-radius: 10px;
-      border: 1.5px solid var(--border);
-      background: #f8fafc;
-      color: var(--text);
-      font-weight: 700;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-
-    .seg-btn.active {
-      background: var(--primary);
-      color: #ffffff;
-      border-color: var(--primary);
-    }
-
-    .pick-item {
-      width: 100%;
-      text-align: right;
-      background: #f8fafc;
-      color: var(--text);
-      border: 1.5px solid var(--border);
-      border-radius: 11px;
-      padding: 10px 12px;
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-      transition: 0.15s;
-    }
-
-    .pick-item:hover {
-      border-color: var(--primary);
-      background: var(--primary-soft);
-    }
-
-    /* معاينة كشف الحساب */
-    .stmt-preview {
-      background: #ffffff;
-      color: #0f172a;
-      border: 1.5px solid #cbd5e1;
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 12px;
-      font-size: 0.84rem;
-    }
-
-    .stmt-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      border-bottom: 2px solid var(--primary);
-      padding-bottom: 8px;
-      margin-bottom: 10px;
-      gap: 8px;
-    }
-
-    .stmt-kpis {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
-      margin-bottom: 10px;
-    }
-
-    .stmt-kpi {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 6px;
-      text-align: center;
-    }
-
-    .stmt-kpi span {
-      display: block;
-      font-size: 0.7rem;
-      color: #64748b;
-    }
-
-    .stmt-kpi b {
-      font-size: 0.88rem;
-    }
-
-    .stmt-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.78rem;
-    }
-
-    .stmt-table th {
-      background: var(--primary-dark);
-      color: #ffffff;
-      padding: 7px 6px;
-      text-align: right;
-    }
-
-    .stmt-table td {
-      padding: 7px 6px;
-      border-bottom: 1px solid #e2e8f0;
-      text-align: right;
-    }
-
-    .stmt-table tr:nth-child(even) td {
-      background: #f8fafc;
-    }
-
-    .install-banner {
-      background: #fef3c7;
-      border: 1px solid #f59e0b;
-      color: #92400e;
-      padding: 11px 13px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      margin-bottom: 12px;
-      line-height: 1.65;
-    }
-
-    /* الطباعة المعزولة لكشف الحساب PDF */
-    #printStmt {
-      display: none;
-    }
-
-    @media print {
-      html, body {
-        background: #ffffff !important;
-        color: #000000 !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        height: auto !important;
-      }
-      body > *:not(#printStmt) {
-        display: none !important;
-      }
-      #printStmt {
-        display: block !important;
-        position: static !important;
-        width: 100% !important;
-        padding: 16px !important;
-        background: #ffffff !important;
-      }
-      #printStmt .stmt-preview {
-        border: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-      }
-    }
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-user-drag: none;
+    }
+    .card-frame.is-used img { filter: grayscale(70%); opacity: 0.58; }
+
+    .used-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; background: rgba(220,38,38,0.12); }
+    .used-overlay svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .stamp { position: relative; z-index: 2; background: rgba(220,38,38,0.95); color: #fff; border: 2px solid #fff; padding: 5px 14px; border-radius: 9px; font-size: 0.86rem; font-weight: 900; transform: rotate(-7deg); text-align: center; }
+
+    .copy-row { display: flex; gap: 6px; }
+    .copy-row input { direction: ltr; text-align: center; font-family: monospace; font-size: 1.08rem; letter-spacing: 1.2px; }
+    .url-row { display: grid; grid-template-columns: 1fr 90px; gap: 8px; }
+    .act-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 10px; }
+    .nav-row { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
+    @media (max-width: 560px) {
+      .grid-2, .act-row { grid-template-columns: 1fr; }
+      .card-frame { max-width: 290px; }
+      .card-frame img { max-height: 185px; }
+    }
+
+    .modal { position: fixed; inset: 0; background: rgba(2,6,23,0.8); z-index: 60; display: flex; align-items: center; justify-content: center; padding: 14px; }
+    .modal-box { background: var(--card); border: 1px solid var(--border); border-radius: 18px; max-width: 820px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; }
+    .modal-body { padding: 14px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+    .mini { border: 1px solid var(--border); border-radius: 10px; padding: 8px; text-align: center; cursor: pointer; background: var(--elev); }
+    .mini.active { border-color: var(--accent); }
+    .mini.used { border-color: var(--danger); opacity: 0.65; }
+
+    .loader { position: fixed; inset: 0; background: rgba(6,11,20,0.88); z-index: 80; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .spin { width: 42px; height: 42px; border: 4px solid var(--accent-soft); border-top-color: var(--accent); border-radius: 50%; animation: sp 0.8s linear infinite; margin-bottom: 12px; }
+    @keyframes sp { to { transform: rotate(360deg); } }
+
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--elev); border: 1px solid var(--border); padding: 10px 18px; border-radius: 999px; font-size: 0.85rem; font-weight: 700; z-index: 90; opacity: 0; pointer-events: none; transition: 0.2s; text-align: center; max-width: 92vw; }
+    .toast.show { opacity: 1; }
   </style>
 </head>
 <body>
 
-<!-- الإشعار العائم -->
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
-
-<!-- شاشة القفل برمز PIN -->
-<div id="lockScreen" class="lock-screen" hidden>
-  <div class="lock-box">
-    <div style="font-size:2.5rem;">🔒</div>
-    <h2>دفتر الديون الذكي</h2>
-    <p>أدخل رمز PIN لفتح الدفتر</p>
-    <input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" placeholder="••••" autocomplete="off" />
-    <button class="btn btn-primary" style="width:100%; background:#ffffff; color:#115e59;" onclick="tryUnlockPin()">دخول</button>
-    <div id="pinErr" class="lock-err"></div>
-  </div>
-</div>
-
-<!-- الغلاف الرئيسي للتطبيق (يُضبّب تلقائياً عند مغادرة التبويب للخصوصية) -->
-<div id="appShell">
-
-  <!-- الهيدر التركوازي المثبت -->
-  <header id="appHeader">
+  <header>
     <div class="header-inner">
-      <div class="header-top">
-        <div class="app-title">📒 دفتر الديون الذكي</div>
-        <div class="header-badges">
-          <span class="header-pill" id="headerCustCount">0 زبون</span>
-          <span class="header-pill">يعمل بدون نت 100%</span>
-          <button type="button" id="headerLockBtn" class="header-lock-btn" title="قفل الدفتر" aria-label="قفل الدفتر" onclick="lockAppNow()" hidden>🔒</button>
+      <div class="brand">
+        <div class="brand-badge">💳</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <h1 style="font-size:0.98rem;">مُقطّع وعارض بطاقات الإنترنت</h1>
+            <span class="pill" id="engineBadge">جاري الفحص...</span>
+          </div>
+          <p class="sub" id="subTitle">ارفع ملف PDF لتقطيع البطاقات وقراءة الأرقام تلقائياً</p>
         </div>
       </div>
-      <div class="stats-bar">
-        <div class="stat-box">
-          <div class="stat-label">إجمالي الديون</div>
-          <div class="stat-val" id="statTotalDebt">0</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">إجمالي التحصيلات</div>
-          <div class="stat-val" id="statTotalPaid" style="color:#bbf7d0;">0</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">زبائن متأخرون</div>
-          <div class="stat-val" id="statOverdue" style="color:#fde68a;">0</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">وصلوا للحد المسموح</div>
-          <div class="stat-val" id="statOverLimit" style="color:#fecaca;">0</div>
-        </div>
+      <div class="actions">
+        <button id="mapBtn" class="btn hidden">⊞ خريطة البطاقات</button>
+        <button id="clearBtn" class="btn btn-danger-outline hidden">🗑️ إزالة الملف</button>
       </div>
     </div>
   </header>
 
-  <main class="container">
-
-    <!-- ==================== الصفحة 1: الزبائن والبوت السريع ==================== -->
-    <section id="page-customers" class="page active">
-      <!-- بطاقة البوت السريع -->
-      <div id="botCard" class="card bot-box">
-        <div class="card-title">
-          <span>🤖 البوت السريع (الإضافة السريعة)</span>
-        </div>
-        <div class="bot-hint">
-          للديون: <b>أحمد 150 بندورة</b> • للدفعات: <b>دفع أحمد 50</b> أو <b>أحمد 500 دفعة</b>
-        </div>
-        <div class="bot-input-row">
-          <input type="text" id="botInput" placeholder="مثال: مروان حسن 150 أو دفع مروان 50" enterkeyhint="send" />
-          <button type="button" class="btn btn-primary" onclick="processBot()">إرسال</button>
-        </div>
-        <div id="botFeedback" class="bot-feedback"></div>
-      </div>
-
-      <!-- شريط البحث (يتحول لوضع التركيز الكامل عند الضغط عليه) -->
-      <div class="search-wrap" id="searchWrap">
-        <input type="text" id="searchInput" placeholder="🔍 ابحث باسم الزبون أو رقم جواله..." autocomplete="off" />
-        <button type="button" id="cancelSearchBtn" class="btn btn-outline btn-sm" onclick="exitSearchFocusMode(true)" hidden>إلغاء</button>
-      </div>
-
-      <!-- شريط الفلاتر -->
-      <div class="pills-row" id="pillsRow">
-        <button type="button" class="pill active" data-filter="all" onclick="setFilter('all')">الكل</button>
-        <button type="button" class="pill" data-filter="limit" onclick="setFilter('limit')">🔴 وصلوا للحد</button>
-        <button type="button" class="pill" data-filter="overdue" onclick="setFilter('overdue')">⏰ متأخرون</button>
-        <button type="button" class="pill" data-filter="healthy" onclick="setFilter('healthy')">✅ سليم</button>
-        <button type="button" class="pill" data-filter="nophone" onclick="setFilter('nophone')">📵 بدون رقم</button>
-        <button type="button" class="pill" data-filter="zero" onclick="setFilter('zero')">رصيد صفر</button>
-      </div>
-
-      <!-- أزرار أدوات الزبائن السريعة -->
-      <div class="quick-toolbar" id="quickToolbar">
-        <button type="button" class="btn btn-primary" onclick="openAddCustomerModal()">+ زبون جديد</button>
-        <button type="button" class="btn btn-outline" onclick="openTop5Modal()">📊 نظرة سريعة</button>
-        <button type="button" class="btn btn-teal-outline" onclick="openBulkReminderModal()">📣 تذكير جماعي</button>
-      </div>
-
-      <!-- قائمة الزبائن -->
-      <div id="customerList"></div>
+  <main>
+    <!-- 1. شاشة البداية: اختر ملف -->
+    <section id="uploadSec" class="upload-box">
+      <input type="file" id="fileInput" accept="application/pdf" class="hidden" />
+      <div style="font-size:2.6rem;margin-bottom:12px;">📂</div>
+      <h2 style="font-size:1.25rem;margin-bottom:8px;">اختر ملف بطاقات الإنترنت (PDF)</h2>
+      <p class="sub" style="margin-bottom:18px;line-height:1.6;">اسحب الملف هنا أو اضغط للاختيار لتقطيع البطاقات وقراءة أرقامها تلقائياً وحفظ مكانك بدون إنترنت.</p>
+      <button type="button" id="pickBtn" class="btn btn-primary" style="padding:11px 24px;">اختيار ملف PDF</button>
     </section>
 
-    <!-- ==================== الصفحة 2: مبيعات اليوم والسجل اليومي ==================== -->
-    <section id="page-daily" class="page">
-      <div class="card">
-        <div class="card-title">
-          <span>📊 مبيعات اليوم والسجل اليومي</span>
-          <div style="display:flex; gap:6px; align-items:center;">
-            <input type="date" id="dailyDate" style="width:auto; padding:6px 8px; font-size:0.84rem;" onchange="renderDailyLog()" />
-            <button type="button" class="btn btn-teal-outline btn-sm" onclick="jumpToToday()">اليوم</button>
-          </div>
-        </div>
-        <div class="daily-stats">
-          <div class="daily-stat" style="background:var(--danger-bg); color:#991b1b; border:1px solid var(--danger-border);">
-            <div class="label">مبيعات / ديون اليوم (+)</div>
-            <div class="val" id="dailyDebtSum">0</div>
-          </div>
-          <div class="daily-stat" style="background:var(--success-bg); color:#166534; border:1px solid var(--success-border);">
-            <div class="label">تحصيلات اليوم (-)</div>
-            <div class="val" id="dailyPaySum">0</div>
-          </div>
-          <div class="daily-stat" style="background:#f8fafc; color:#0f172a; border:1px solid #cbd5e1;">
-            <div class="label">صافي رصيد اليوم</div>
-            <div class="val" id="dailyNetSum">0</div>
-          </div>
-        </div>
-        <div style="font-size:0.8rem; color:var(--muted); margin-bottom:8px; display:flex; justify-content:space-between;">
-          <span>العمليات المسجلة في هذا التاريخ:</span>
-          <b id="dailyCountLbl">0 عملية</b>
-        </div>
-        <div id="dailyLogList"></div>
-      </div>
-    </section>
-
-    <!-- ==================== الصفحة 3: الأرقام والحدود والاستيراد النصي ==================== -->
-    <section id="page-bulk" class="page">
-      <div class="card">
-        <div class="card-title">
-          <span>📱 تعديل سريع لأرقام الجوال والحد المسموح</span>
-        </div>
-        <p style="font-size:0.8rem; color:var(--muted); margin-bottom:10px;">
-          أدخل أرقام الجوال (9 أرقام بدون صفر بالبداية) أو الحد المسموح لأي زبون وسيتم <b>حفظه تلقائياً</b> في جهازك.
-        </p>
-        <input type="text" id="bulkManageSearch" placeholder="🔍 ابحث عن زبون لتعديل أرقامه أو حده..." oninput="renderBulkManageList()" style="margin-bottom:10px;" />
-        <div id="bulkManageList"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">📥 استيراد قائمة أسماء ومبالغ دفعة واحدة</div>
-        <p style="font-size:0.8rem; color:var(--muted); margin-bottom:8px;">
-          الصيغة المدعومة: <code>الاسم المبلغ</code> أو <code>الاسم | رقم الجوال | المبلغ | الحد المسموح</code>
-        </p>
-        <textarea id="bulkText" rows="5" placeholder="مثال:&#10;محمد حسن 1298&#10;أحمد علي | 0599123456 | 500 | 3000"></textarea>
-        <div style="margin-top:8px;">
-          <button type="button" class="btn btn-primary" onclick="importBulkTextList()">استيراد القائمة</button>
+    <!-- 2. معايرة التقطيع عند اختيار ملف -->
+    <section id="calSec" class="cal-grid hidden">
+      <div class="panel" style="text-align:center;">
+        <p style="font-weight:700;font-size:0.9rem;margin-bottom:10px;">معاينة القص (من اليمين إلى اليسار صفاً بصف)</p>
+        <div class="preview-wrap">
+          <canvas id="previewCanvas"></canvas>
+          <div id="gridOverlay"></div>
         </div>
       </div>
-    </section>
-
-    <!-- ==================== الصفحة 4: الإعدادات، نصوص التذكير، المزامنة والنسخ الاحتياطي ==================== -->
-    <section id="page-settings" class="page">
-      <!-- قسم Excel والنسخ الاحتياطي والاستعادة -->
-      <div class="card" style="border:1.5px solid #99f6e4; background:linear-gradient(to left, var(--primary-soft), #ffffff);">
-        <div class="card-title">
-          <span>💾 المزامنة، Excel والنسخ الاحتياطي</span>
-        </div>
-        <p style="font-size:0.8rem; color:var(--muted); margin-bottom:10px;">
-          تصدير ملفات <b>Excel حقيقية (.xlsx)</b> مرتبة بأعمدة واضحة (اسم الزبون، المبلغ، النوع، أرقام الجوال، التاريخ، الملاحظة، الحد المسموح) وورقتين (سجل العمليات + ملخص الزبائن).
-        </p>
-        <div class="grid-2" style="margin-bottom:8px;">
-          <button type="button" class="btn btn-success" onclick="exportXlsx('backup')">💾 نسخة احتياطية (Excel)</button>
-          <button type="button" class="btn btn-primary" onclick="exportXlsx('report')">📊 تصدير Excel مرتب</button>
-        </div>
-        <button type="button" class="btn btn-teal-outline" style="width:100%; margin-bottom:10px;" onclick="document.getElementById('excelRestoreInput').click()">
-          ⬆️ استعادة من نسخة Excel (.xlsx / .csv)
-        </button>
-        <input type="file" id="excelRestoreInput" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onchange="handleExcelRestore(event)" hidden />
-
+      <div class="panel" style="display:flex;flex-direction:column;gap:12px;">
+        <h3 style="font-size:1rem;">إعدادات الشبكة والهوامش</h3>
         <div class="grid-2">
-          <button type="button" class="btn btn-outline btn-sm" onclick="exportJSON()">⬇️ حفظ نسخة (JSON)</button>
-          <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('jsonRestoreInput').click()">⬆️ استعادة (JSON)</button>
+          <div><label>الأعمدة</label><input type="number" id="colsIn" value="5" min="1" max="20"></div>
+          <div><label>الصفوف</label><input type="number" id="rowsIn" value="11" min="1" max="30"></div>
+          <div><label>هامش أعلى %</label><input type="number" id="mTop" value="2" min="0" max="40" step="0.5"></div>
+          <div><label>هامش أسفل %</label><input type="number" id="mBot" value="2" min="0" max="40" step="0.5"></div>
+          <div><label>هامش يمين %</label><input type="number" id="mRight" value="2" min="0" max="40" step="0.5"></div>
+          <div><label>هامش يسار %</label><input type="number" id="mLeft" value="2" min="0" max="40" step="0.5"></div>
         </div>
-        <input type="file" id="jsonRestoreInput" accept=".json,application/json" onchange="handleJsonRestore(event)" hidden />
+        <div style="background:var(--elev);padding:10px;border-radius:10px;font-size:0.85rem;display:flex;justify-content:space-between;">
+          <span>إجمالي البطاقات:</span>
+          <strong style="color:var(--accent);" id="totalLbl">55 بطاقة</strong>
+        </div>
+        <button type="button" id="sliceBtn" class="btn btn-primary" style="padding:13px;">تقطيع الكل وعرض البطاقة الأولى ✂️</button>
+      </div>
+    </section>
+
+    <!-- 3. عرض البطاقة الواحدة -->
+    <section id="viewSec" class="viewer hidden">
+      <div class="panel" style="padding:10px 14px;">
+        <div class="status-row">
+          <span>بطاقة <strong id="curIdxLbl" style="color:var(--accent);">1</strong> من <span id="totIdxLbl">0</span></span>
+          <div style="display:flex;gap:6px;">
+            <span class="stat" style="background:var(--accent-soft);color:var(--accent);">المتبقي: <b id="remLbl">0</b></span>
+            <span class="stat" style="background:var(--danger-soft);color:var(--danger);">المشطوب: <b id="usedLbl">0</b></span>
+          </div>
+        </div>
+        <div class="track"><div class="fill" id="progFill"></div></div>
       </div>
 
-      <!-- الإعدادات العامة -->
-      <div class="card">
-        <div class="card-title">⚙️ الإعدادات العامة</div>
-        <div class="form-group">
-          <label for="shopNameInput">اسم المحل / التاجر (يظهر في الرسائل وكشف الحساب):</label>
-          <input type="text" id="shopNameInput" placeholder="دفتر الديون الذكي" />
+      <div class="panel card-stage">
+        <div class="card-meta">
+          <span class="pill" id="badgeNum" style="background:var(--accent);color:#fff;">بطاقة #1</span>
+          <span id="stateTxt" style="font-size:0.8rem;font-weight:800;color:var(--accent);">● متاحة</span>
+        </div>
+        <div class="card-frame" id="cardFrame">
+          <img id="cardImg" src="" alt="البطاقة" draggable="false" />
+          <div class="used-overlay hidden" id="usedOverlay">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+              <line x1="0" y1="0" x2="100" y2="100" stroke="#dc2626" stroke-width="3.2" />
+              <line x1="100" y1="0" x2="0" y2="100" stroke="#dc2626" stroke-width="3.2" />
+            </svg>
+            <div class="stamp">تم التشغيل والاتصال<br><small>كرت مشطوب</small></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="display:flex;flex-direction:column;gap:9px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <strong style="font-size:0.9rem;">بيانات الدخول</strong>
+            <span class="pill" id="fillBadge">✨ تعبئة تلقائية</span>
+          </div>
+          <button type="button" id="reOcrBtn" class="btn" style="padding:4px 10px;font-size:0.76rem;">🔍 إعادة قراءة الكرت</button>
         </div>
         <div class="grid-2">
-          <div class="form-group">
-            <label for="currencyInput">العملة:</label>
-            <input type="text" id="currencyInput" placeholder="₪" />
+          <div>
+            <label>اسم المستخدم (Username)</label>
+            <div class="copy-row">
+              <input type="text" id="userIn" placeholder="اسم المستخدم" autocomplete="off" />
+              <button type="button" id="copyUser" class="btn">نسخ</button>
+            </div>
           </div>
-          <div class="form-group">
-            <label for="defaultLimitInput">الحد المسموح الافتراضي:</label>
-            <input type="number" id="defaultLimitInput" min="0" step="any" inputmode="decimal" />
+          <div>
+            <label>كلمة المرور (Password)</label>
+            <div class="copy-row">
+              <input type="text" id="passIn" placeholder="كلمة المرور" autocomplete="off" />
+              <button type="button" id="copyPass" class="btn">نسخ</button>
+            </div>
           </div>
         </div>
-        <div class="form-group">
-          <label for="overdueDaysInput">عدد أيام اعتبار الدين متأخراً:</label>
-          <input type="number" id="overdueDaysInput" min="1" step="1" inputmode="numeric" />
+        <div class="url-row">
+          <div>
+            <label>رابط تسجيل الدخول في الراوتر 🔒</label>
+            <input type="url" id="urlIn" class="locked-field" dir="ltr" value="http://10.5.50.1/login" readonly disabled tabindex="-1" />
+          </div>
+          <div>
+            <label>الطريقة 🔒</label>
+            <select id="methodIn" class="locked-field" dir="ltr" disabled tabindex="-1">
+              <option value="POST" selected>POST</option>
+            </select>
+          </div>
         </div>
-        <button type="button" class="btn btn-primary" style="width:100%;" onclick="saveGeneralSettings()">حفظ الإعدادات العامة</button>
-      </div>
-
-      <!-- نصوص التذكير (نصان فقط: الودي والحد المسموح) -->
-      <div class="card">
-        <div class="card-title">💬 نصوص التذكير</div>
-        <p style="font-size:0.78rem; color:var(--muted); margin-bottom:10px;">
-          المتغيرات المتاحة: <code>{name}</code> اسم الزبون • <code>{amount}</code> الرصيد • <code>{limit}</code> الحد المسموح • <code>{shop}</code> اسم المحل
-        </p>
-        <div class="form-group">
-          <label for="tplFriendlyInput">نص التذكير الودي:</label>
-          <textarea id="tplFriendlyInput" rows="3"></textarea>
-        </div>
-        <div class="form-group">
-          <label for="tplLimitInput">نص تنبيه وصول للحد المسموح:</label>
-          <textarea id="tplLimitInput" rows="3"></textarea>
-        </div>
-        <button type="button" class="btn btn-primary" style="width:100%;" onclick="saveTemplatesSettings()">حفظ نصوص التذكير</button>
-      </div>
-
-      <!-- الأمان وقفل PIN -->
-      <div class="card">
-        <div class="card-title">
-          <span>🔐 قفل التطبيق برمز PIN</span>
-          <span id="pinStatusBadge" class="badge badge-info">غير مفعل</span>
-        </div>
-        <p style="font-size:0.8rem; color:var(--muted); margin-bottom:10px;">
-          احمِ دفتر ديونك برمز سري عند فتح التطبيق، مع تعتيم تلقائي للشاشة عند التبديل بين التطبيقات.
-        </p>
-        <div class="grid-2">
-          <button type="button" class="btn btn-teal-outline btn-sm" onclick="openPinSetupModal()">🔑 تعيين / تغيير PIN</button>
-          <button type="button" class="btn btn-danger-outline btn-sm" id="disablePinBtn" onclick="disablePinLock()">🔓 إلغاء القفل</button>
+        <div class="act-row">
+          <button type="button" id="connectBtn" class="btn btn-primary" style="padding:11px;">اتصال وتشغيل الكرت الآن 🚀</button>
+          <button type="button" id="toggleUsedBtn" class="btn btn-danger-outline" style="padding:11px;">شطب الكرت يدوياً ✖</button>
         </div>
       </div>
 
-      <!-- دليل التثبيت بدون نت -->
-      <div class="install-banner">
-        <b>📲 لتثبيته كتطبيق على جوالك أو كمبيوترك بدون نت:</b><br />
-        • <b>أندرويد (Chrome):</b> اضغط النقاط الثلاث (⋮) أعلى المتصفح ثم <b>«الإضافة إلى الشاشة الرئيسية»</b>.<br />
-        • <b>آيفون (Safari):</b> اضغط زر المشاركة (⬆️) ثم <b>«إضافة إلى الصفحة الرئيسية»</b>.<br />
-        • <b>كمبيوتر (Chrome/Edge):</b> اضغط أيقونة التثبيت في شريط العنوان أو احفظ الملف على جهازك.
-      </div>
-
-      <!-- مسح جميع البيانات -->
-      <div class="card">
-        <button type="button" class="btn btn-danger-outline" style="width:100%;" id="resetBtn" onclick="resetAllData()">
-          🗑️ مسح جميع البيانات والبدء من جديد
-        </button>
+      <div class="nav-row">
+        <button type="button" id="prevBtn" class="btn" style="padding:13px;">➡️ السابقة</button>
+        <button type="button" id="nextBtn" class="btn btn-primary" style="padding:13px;font-size:1.02rem;">البطاقة التالية ⬅️</button>
       </div>
     </section>
-
   </main>
 
-  <!-- شريط التنقل السفلي -->
-  <nav class="bottom-nav" id="bottomNav">
-    <button type="button" class="nav-btn active" data-page="customers" onclick="switchPage('customers')">
-      <span class="nav-icon">👥</span>
-      <span>الزبائن</span>
-    </button>
-    <button type="button" class="nav-btn" data-page="daily" onclick="switchPage('daily')">
-      <span class="nav-icon">📊</span>
-      <span>مبيعات اليوم</span>
-    </button>
-    <button type="button" class="nav-btn" data-page="bulk" onclick="switchPage('bulk')">
-      <span class="nav-icon">📱</span>
-      <span>الأرقام والحدود</span>
-    </button>
-    <button type="button" class="nav-btn" data-page="settings" onclick="switchPage('settings')">
-      <span class="nav-icon">⚙️</span>
-      <span>الإعدادات</span>
-    </button>
-  </nav>
-</div>
-
-<!-- ==================== النوافذ المنبثقة (Modals) ==================== -->
-
-<!-- 1. نافذة إضافة زبون جديد -->
-<div class="modal-backdrop" id="addCustModal">
-  <div class="modal">
-    <div class="modal-header">
-      <h3>➕ زبون جديد</h3>
-      <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('addCustModal')">✕</button>
-    </div>
-    <div class="form-group">
-      <label for="newCustName">اسم الزبون:</label>
-      <input type="text" id="newCustName" placeholder="الاسم الكامل" />
-    </div>
-    <div class="form-group">
-      <label for="newCustPhone1Num">رقم الجوال (9 أرقام فقط بدون صفر بالبداية):</label>
-      <div class="phone-field-row">
-        <input type="tel" id="newCustPhone1Num" class="phone-num-input" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" placeholder="590000000" />
-        <select id="newCustPhone1CC" class="phone-cc-select">
-          <option value="970">فلسطين +970</option>
-          <option value="972">إسرائيل +972</option>
-        </select>
+  <!-- نافذة الخريطة -->
+  <div id="mapModal" class="modal hidden">
+    <div class="modal-box">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+        <strong>خريطة البطاقات</strong>
+        <button type="button" id="closeMap" class="btn">إغلاق ✖</button>
       </div>
-    </div>
-    <div class="form-group" id="newCustPhone2Wrap" hidden>
-      <label for="newCustPhone2Num">رقم جوال ثاني (اختياري):</label>
-      <div class="phone-field-row">
-        <input type="tel" id="newCustPhone2Num" class="phone-num-input" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" placeholder="590000000" />
-        <select id="newCustPhone2CC" class="phone-cc-select">
-          <option value="970">فلسطين +970</option>
-          <option value="972">إسرائيل +972</option>
-        </select>
-      </div>
-    </div>
-    <div class="grid-2">
-      <div class="form-group">
-        <label for="newCustInitial">الرصيد الافتتاحي:</label>
-        <input type="number" id="newCustInitial" value="0" min="0" step="any" inputmode="decimal" />
-      </div>
-      <div class="form-group">
-        <label for="newCustLimit">الحد المسموح (0 = بدون حد):</label>
-        <input type="number" id="newCustLimit" min="0" step="any" inputmode="decimal" />
-      </div>
-    </div>
-    <div id="newCustErr" class="form-err" hidden></div>
-    <button type="button" class="btn btn-primary" style="width:100%;" onclick="createNewCustomer()">حفظ الزبون</button>
-  </div>
-</div>
-
-<!-- 2. نافذة تفاصيل الزبون وتعديل بياناته وكشف حسابه -->
-<div class="modal-backdrop" id="custModal">
-  <div class="modal">
-    <div class="modal-header">
-      <div>
-        <h3 id="modalCustTitle">اسم الزبون</h3>
-        <div id="modalCustPhonesDisplay" style="font-size:0.78rem; color:var(--muted); margin-top:2px;"></div>
-        <span style="font-size:0.74rem; color:var(--success); font-weight:700;" id="autoSaveStatus">✓ التعديلات تُحفظ تلقائياً</span>
-      </div>
-      <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('custModal')">✕</button>
-    </div>
-
-    <!-- ملخص الرصيد وشريط استهلاك الحد -->
-    <div id="modalCustSummary" style="margin-bottom:12px;"></div>
-
-    <!-- أزرار الإجراءات السريعة -->
-    <div class="grid-2" style="margin-bottom:8px;">
-      <button type="button" class="btn btn-primary" onclick="openTxModal('debt')">➕ إضافة دين</button>
-      <button type="button" class="btn btn-success" onclick="openTxModal('pay')">✅ تسجيل دفعة</button>
-    </div>
-    <div class="grid-3" style="margin-bottom:12px;">
-      <button type="button" class="btn btn-teal-outline btn-sm" onclick="openReminderModal(activeCustomerId)">💬 إرسال تذكير</button>
-      <button type="button" class="btn btn-outline btn-sm" onclick="callCustomer(activeCustomerId)">📞 اتصال</button>
-      <button type="button" class="btn btn-outline btn-sm" onclick="openStatementModal(activeCustomerId)">📄 كشف حساب</button>
-    </div>
-
-    <!-- قسم التعديل الدائم لبيانات الزبون -->
-    <div style="background:var(--primary-soft); padding:11px; border-radius:12px; border:1px solid #99f6e4; margin-bottom:12px;">
-      <div style="font-weight:800; font-size:0.84rem; color:var(--primary-dark); margin-bottom:8px;">
-        ✏️ تعديل بيانات الزبون الدائمة
-      </div>
-      <div class="grid-2">
-        <div class="form-group">
-          <label for="editCustName">الاسم:</label>
-          <input type="text" id="editCustName" oninput="autoSaveCustomerMeta()" />
-        </div>
-        <div class="form-group">
-          <label for="editCustLimit">الحد المسموح (0 = بدون):</label>
-          <input type="number" id="editCustLimit" min="0" step="any" inputmode="decimal" oninput="autoSaveCustomerMeta()" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="editCustPhone1Num">رقم الجوال 1 (9 أرقام):</label>
-        <div class="phone-field-row">
-          <input type="tel" id="editCustPhone1Num" class="phone-num-input" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" placeholder="590000000" />
-          <select id="editCustPhone1CC" class="phone-cc-select" onchange="autoSaveCustomerMeta()">
-            <option value="970">فلسطين +970</option>
-            <option value="972">إسرائيل +972</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-group" id="editCustPhone2Wrap" hidden>
-        <label for="editCustPhone2Num">رقم جوال ثاني (9 أرقام):</label>
-        <div class="phone-field-row">
-          <input type="tel" id="editCustPhone2Num" class="phone-num-input" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" placeholder="590000000" />
-          <select id="editCustPhone2CC" class="phone-cc-select" onchange="autoSaveCustomerMeta()">
-            <option value="970">فلسطين +970</option>
-            <option value="972">إسرائيل +972</option>
-          </select>
-        </div>
-      </div>
-      <div id="editPhoneHint" style="font-size:0.75rem; color:var(--warning); font-weight:700;" hidden></div>
-    </div>
-
-    <!-- سجل حركات الزبون -->
-    <div style="font-weight:800; font-size:0.9rem; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
-      <span>📜 سجل الحركات</span>
-      <span id="modalTxCount" style="font-size:0.76rem; color:var(--muted);"></span>
-    </div>
-    <div id="modalTxHistory" style="max-height:240px; overflow-y:auto; margin-bottom:12px;"></div>
-
-    <button type="button" class="btn btn-danger-outline" style="width:100%;" onclick="requestDeleteCustomer()">🗑️ حذف الزبون</button>
-  </div>
-</div>
-
-<!-- 3. نافذة إضافة دين أو دفعة -->
-<div class="modal-backdrop" id="txModal">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 id="txModalTitle">إضافة دين</h3>
-      <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('txModal')">✕</button>
-    </div>
-    <div class="form-group">
-      <label for="txModalAmount">المبلغ:</label>
-      <input type="number" id="txModalAmount" min="0" step="any" inputmode="decimal" placeholder="0" />
-    </div>
-    <div class="form-group">
-      <label id="txModalDateLabel" for="txModalDate">تاريخ الدين</label>
-      <input type="date" id="txModalDate" />
-    </div>
-    <div class="form-group">
-      <label for="txModalNote">الصنف أو الملاحظة (اختياري):</label>
-      <input type="text" id="txModalNote" placeholder="مثال: صندوق بندورة، دفعة نقدية..." />
-    </div>
-    <div id="txModalErr" class="form-err" hidden></div>
-    <div class="grid-2">
-      <button type="button" id="txModalSubmitBtn" class="btn btn-primary" onclick="submitTxModal()">حفظ</button>
-      <button type="button" class="btn btn-outline" onclick="closeModal('txModal')">إلغاء</button>
+      <div id="mapGrid" class="modal-body"></div>
     </div>
   </div>
-</div>
 
-<!-- 4. نافذة إرسال تذكير (واتساب / SMS، اختيار الرقم، نبرتان فقط) -->
-<div class="modal-backdrop" id="reminderModal">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 id="remModalTitle">💬 إرسال تذكير</h3>
-      <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('reminderModal')">✕</button>
-    </div>
-    <div id="remBody"></div>
+  <!-- شاشة التحميل -->
+  <div id="loader" class="loader hidden">
+    <div class="spin"></div>
+    <h3 id="loadTitle">جاري المعالجة...</h3>
+    <p id="loadSub" class="sub"></p>
   </div>
-</div>
 
-<!-- 5. نافذة كشف الحساب (معاينة + طباعة PDF + حفظ صورة PNG) -->
-<div class="modal-backdrop" id="stmtModal">
-  <div class="modal" style="max-width:560px;">
-    <div class="modal-header">
-      <h3>📄 معاينة كشف الحساب</h3>
-      <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('stmtModal')">✕</button>
-    </div>
-    <div id="stmtModalContent"></div>
-    <div class="grid-2" style="margin-bottom:8px;">
-      <button type="button" class="btn btn-primary" onclick="printCurrentStatement()">🖨️ طباعة / حفظ PDF</button>
-      <button type="button" class="btn btn-success" onclick="downloadCurrentStatementPng()">🖼️ حفظ كصورة PNG</button>
-    </div>
-    <button type="button" class="btn btn-outline" style="width:100%;" onclick="closeModal('stmtModal')">إغلاق</button>
-  </div>
-</div>
+  <div id="toast" class="toast"></div>
 
-<!-- 6. نافذة عامة ديناميكية (اختيار الأسماء المتشابهة، تأكيد الحذف، اختيار رقم الاتصال، أعلى 5، تذكير جماعي، إعداد PIN) -->
-<div class="modal-backdrop" id="genericModal">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 id="genericModalTitle">عنوان</h3>
-      <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('genericModal')">✕</button>
-    </div>
-    <div id="genericModalBody"></div>
-  </div>
-</div>
+  <script>
+    const $ = id => document.getElementById(id);
+    const ROUTER_URL = 'http://10.5.50.1/login';
+    const HTTP_METHOD = 'POST';
+    let pdfDoc = null, fileName = '', cards = [], idx = 0, toastT;
 
-<!-- حاوية الطباعة المعزولة -->
-<div id="printStmt"></div>
+    const toast = msg => {
+      $('toast').textContent = msg;
+      $('toast').classList.add('show');
+      clearTimeout(toastT);
+      toastT = setTimeout(() => $('toast').classList.remove('show'), 2800);
+    };
 
-<script>
-/* ============================================================================
-   دفتر الديون الذكي — النسخة المدمجة المستقلة (100% بدون إنترنت)
-   ============================================================================ */
+    const setLoad = (show, t = '', s = '') => {
+      $('loadTitle').textContent = t;
+      $('loadSub').textContent = s;
+      $('loader').classList.toggle('hidden', !show);
+    };
 
-const STORAGE_KEY = "smart_debt_merged_v1";
+    // منع السحب الأفقي لليمين واليسار على البطاقة
+    $('cardFrame').addEventListener('dragstart', e => e.preventDefault());
+    let touchStartX = 0, touchStartY = 0;
+    $('cardFrame').addEventListener('touchstart', e => {
+      if (e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+    $('cardFrame').addEventListener('touchmove', e => {
+      if (e.touches.length === 1) {
+        const dx = Math.abs(e.touches[0].clientX - touchStartX);
+        const dy = Math.abs(e.touches[0].clientY - touchStartY);
+        if (dx > dy) e.preventDefault();
+      }
+    }, { passive: false });
 
-const DEFAULT_TPL = {
-  friendly: "مرحباً {name}، نذكّرك بلطف بأن عليك مبلغ {amount} مستحق السداد. مع تحيات: {shop} 🙏",
-  limit: "عزيزي {name}، وصل حسابك إلى الحد المسموح ({limit}). الرصيد الحالي {amount}. نرجو تسديد جزء من المبلغ للمتابعة. مع تحيات: {shop}"
-};
-
-let state = {
-  settings: {
-    shopName: "دفتر الديون الذكي",
-    currency: "₪",
-    defaultLimit: 2000,
-    overdueDays: 30,
-    pinHash: null,
-    tpl: { ...DEFAULT_TPL }
-  },
-  customers: [],
-  updatedAt: Date.now()
-};
-
-let currentPage = "customers";
-let currentFilter = "all";
-let searchFocusActive = false;
-let activeCustomerId = null;
-let activeTxMode = "debt";
-let activeStmtCustomerId = null;
-let lastBotUndo = null;
-
-/* ==================== أدوات مساعدة عامة ==================== */
-
-function uid(prefix = "id") {
-  return prefix + "_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 6);
-}
-
-function escapeHtml(str) {
-  return String(str == null ? "" : str).replace(/[&<>"']/g, m => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[m]));
-}
-
-function arDigitsToEn(str) {
-  return String(str == null ? "" : str).replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
-}
-
-function normAr(str) {
-  return String(str || "")
-    .replace(/[\u064B-\u065F\u0670]/g, "")
-    .replace(/[أإآ]/g, "ا")
-    .replace(/ة/g, "ه")
-    .replace(/ى/g, "ي")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLowerCase();
-}
-
-function todayStr(d = new Date()) {
-  const dt = (d instanceof Date) ? d : new Date(d);
-  if (isNaN(dt.getTime())) return todayStr(new Date());
-  return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0");
-}
-
-function formatTimeNow(d = new Date()) {
-  try {
-    return d.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
-  } catch (e) {
-    return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
-  }
-}
-
-function dateStrToTs(dateStr) {
-  if (!dateStr || dateStr === todayStr()) return Date.now();
-  const parts = String(dateStr).split("-").map(Number);
-  if (parts.length !== 3 || parts.some(isNaN)) return Date.now();
-  return new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0).getTime();
-}
-
-function daysBetween(olderDateStr, newerDateStr) {
-  const a = String(olderDateStr || "").split("-").map(Number);
-  const b = String(newerDateStr || "").split("-").map(Number);
-  if (a.length !== 3 || b.length !== 3) return 0;
-  const da = Date.UTC(a[0], a[1] - 1, a[2]);
-  const db = Date.UTC(b[0], b[1] - 1, b[2]);
-  return Math.floor((db - da) / 86400000);
-}
-
-function fmtMoney(n) {
-  const val = Math.round((Number(n) || 0) * 100) / 100;
-  return val.toLocaleString("en-US") + " " + (state.settings.currency || "₪");
-}
-
-function showToast(msg) {
-  const el = document.getElementById("toast");
-  el.textContent = msg;
-  el.classList.add("show");
-  clearTimeout(el._timer);
-  el._timer = setTimeout(() => el.classList.remove("show"), 2600);
-}
-
-function openModal(id) {
-  document.getElementById(id).classList.add("open");
-}
-
-function closeModal(id) {
-  document.getElementById(id).classList.remove("open");
-}
-
-function showGenericModal(title, html) {
-  document.getElementById("genericModalTitle").textContent = title;
-  document.getElementById("genericModalBody").innerHTML = html;
-  openModal("genericModal");
-}
-
-/* ==================== معالجة أرقام الجوال (9 أرقام فقط + مفتاح الدولة) ==================== */
-
-function splitPhone(fullPhone) {
-  let digits = arDigitsToEn(fullPhone || "").replace(/\D/g, "");
-  if (!digits) return { cc: "970", num: "" };
-  let cc = "970";
-  let num = digits;
-  if (digits.startsWith("972")) {
-    cc = "972";
-    num = digits.slice(3);
-  } else if (digits.startsWith("970")) {
-    cc = "970";
-    num = digits.slice(3);
-  }
-  num = num.replace(/^0+/, "").slice(0, 9);
-  return { cc, num };
-}
-
-function cleanImportedPhone(raw) {
-  const digits = arDigitsToEn(raw || "").replace(/\D/g, "");
-  if (!digits) return "";
-  if (digits.startsWith("970") || digits.startsWith("972")) {
-    const cc = digits.slice(0, 3);
-    const rest = digits.slice(3).replace(/^0+/, "").slice(0, 9);
-    return rest ? (cc + rest) : "";
-  }
-  const rest = digits.replace(/^0+/, "").slice(0, 9);
-  return rest ? ("970" + rest) : "";
-}
-
-function sanitizePhoneInputEl(inp, ccSel) {
-  let v = arDigitsToEn(inp.value).replace(/\D/g, "");
-  if (v.startsWith("970") && v.length >= 12) {
-    if (ccSel) ccSel.value = "970";
-    v = v.slice(3);
-  } else if (v.startsWith("972") && v.length >= 12) {
-    if (ccSel) ccSel.value = "972";
-    v = v.slice(3);
-  }
-  v = v.replace(/^0+/, "").slice(0, 9);
-  if (inp.value !== v) inp.value = v;
-  return v;
-}
-
-function bindStrictPhoneInput(inp, ccSel, onCleanCallback) {
-  if (!inp || inp._strictBound) return;
-  inp._strictBound = true;
-  inp.addEventListener("keydown", e => {
-    const allowed = ["Backspace", "Delete", "Tab", "ArrowLeft", "ArrowRight", "Home", "End", "Enter"];
-    if (allowed.includes(e.key) || e.ctrlKey || e.metaKey) return;
-    if (!/^[0-9٠-٩]$/.test(e.key)) e.preventDefault();
-  });
-  const handle = () => {
-    const val = sanitizePhoneInputEl(inp, ccSel);
-    if (onCleanCallback) onCleanCallback(val);
-  };
-  inp.addEventListener("input", handle);
-  inp.addEventListener("paste", () => setTimeout(handle, 0));
-}
-
-function getCustomerPhones(c) {
-  return [c.phone, c.phone2].filter(p => p && String(p).trim().length > 0);
-}
-
-/* ==================== حسابات الرصيد والحالة والتأخير ==================== */
-
-function getCustomerBalance(c) {
-  const sum = (c.tx || []).reduce((acc, t) => acc + (t.type === "debt" ? Number(t.amount) : -Number(t.amount)), 0);
-  return Math.round(sum * 100) / 100;
-}
-
-function getCustomerLimit(c) {
-  if (typeof c.limit === "number") return c.limit;
-  return Number(state.settings.defaultLimit) || 0;
-}
-
-function getCustomerStats(c) {
-  const balance = getCustomerBalance(c);
-  const limit = getCustomerLimit(c);
-  const ratio = limit > 0 ? (balance / limit) * 100 : 0;
-  const limitReached = limit > 0 && balance >= limit && balance > 0;
-  const nearLimit = limit > 0 && ratio >= 80 && balance < limit && balance > 0;
-
-  // حساب التأخير بنظام FIFO (خصم الدفعات من أقدم الديون أولاً) + دعم تاريخ استحقاق قديم إن وُجد
-  let overdue = false;
-  if (balance > 0) {
-    const today = todayStr();
-    const overdueDays = Math.max(1, Number(state.settings.overdueDays) || 30);
-    const txs = c.tx || [];
-    if (txs.some(t => t.type === "debt" && t.due && t.due < today)) {
-      overdue = true;
-    } else {
-      let paidRemaining = txs.filter(t => t.type === "pay").reduce((a, t) => a + Number(t.amount), 0);
-      const debtsAsc = txs
-        .filter(t => t.type === "debt")
-        .slice()
-        .sort((a, b) => (a.date || "").localeCompare(b.date || "") || (a.ts || 0) - (b.ts || 0));
-
-      for (const d of debtsAsc) {
-        if (paidRemaining >= d.amount) {
-          paidRemaining -= d.amount;
-        } else {
-          const age = daysBetween(d.date || today, today);
-          if (age >= overdueDays) overdue = true;
-          break;
+    // ========================================================
+    // قارئ الأرقام البصري المحسّن (يعمل 100% بدون إنترنت)
+    // ========================================================
+    function computeZoneFeatures(grid, W, H) {
+      const avgZone = (x0, x1, y0, y1) => {
+        let sum = 0, cnt = 0;
+        for (let y = y0; y < y1; y++) {
+          for (let x = x0; x < x1; x++) {
+            sum += grid[y * W + x];
+            cnt++;
+          }
         }
-      }
-    }
-  }
-
-  return { balance, limit, ratio, limitReached, nearLimit, overdue };
-}
-
-/* ==================== الحفظ والترحيل التلقائي من النسخ السابقة ==================== */
-
-function saveState() {
-  state.updatedAt = Date.now();
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch (e) {
-    showToast("⚠️ تعذر الحفظ في الذاكرة المحلية، خذ نسخة احتياطية الآن");
-  }
-}
-
-function migrateFromLegacyStorage() {
-  let migrated = false;
-  const byName = new Map();
-
-  const ensureCustomer = (name, phone, phone2, limit) => {
-    const key = normAr(name);
-    if (!key) return null;
-    if (!byName.has(key)) {
-      const obj = {
-        id: uid("c"),
-        name: String(name).trim(),
-        phone: cleanImportedPhone(phone),
-        phone2: cleanImportedPhone(phone2),
-        limit: typeof limit === "number" ? limit : state.settings.defaultLimit,
-        tx: []
+        return cnt ? sum / cnt : 0;
       };
-      byName.set(key, obj);
-      state.customers.push(obj);
-    } else {
-      const existing = byName.get(key);
-      if (!existing.phone && phone) existing.phone = cleanImportedPhone(phone);
-      if (!existing.phone2 && phone2) existing.phone2 = cleanImportedPhone(phone2);
+      return {
+        ul: avgZone(0, 7, 2, 11),
+        ll: avgZone(0, 7, 13, 22),
+        ur: avgZone(9, 16, 2, 11),
+        lr: avgZone(9, 16, 13, 22),
+        mid: avgZone(4, 12, 9, 15)
+      };
     }
-    return byName.get(key);
-  };
 
-  // 1) الترحيل من التطبيق الجديد (offline_debt_manager_clean_v1)
-  try {
-    const rawNew = localStorage.getItem("offline_debt_manager_clean_v1");
-    if (rawNew) {
-      const old = JSON.parse(rawNew);
-      if (old && old.settings) {
-        state.settings.shopName = old.settings.shopName || state.settings.shopName;
-        state.settings.currency = old.settings.currency || state.settings.currency;
-        if (typeof old.settings.defaultLimit === "number") state.settings.defaultLimit = old.settings.defaultLimit;
-      }
-      const idMap = new Map();
-      (old.customers || []).forEach(c => {
-        const cust = ensureCustomer(c.name, c.phone, "", typeof c.limit === "number" ? c.limit : state.settings.defaultLimit);
-        if (cust) idMap.set(c.id, { cust, legacyBalance: Number(c.balance) || 0 });
-      });
-      (old.transactions || []).forEach(t => {
-        const entry = idMap.get(t.customerId);
-        const cust = entry ? entry.cust : ensureCustomer(t.customerName, "", "", state.settings.defaultLimit);
-        if (!cust) return;
-        const amt = Number(t.amount) || 0;
-        if (amt <= 0) return;
-        const dStr = t.date || todayStr();
-        cust.tx.push({
-          id: uid("t"),
-          type: t.type === "payment" || t.type === "pay" ? "pay" : "debt",
-          amount: amt,
-          note: t.item || t.note || "",
-          date: dStr,
-          time: t.time || "",
-          ts: dateStrToTs(dStr)
-        });
-      });
-      // ضبط الرصيد الافتتاحي إن وجد فرق بين الرصيد القديم والحركات
-      idMap.forEach(({ cust, legacyBalance }) => {
-        const calc = getCustomerBalance(cust);
-        const diff = Math.round((legacyBalance - calc) * 100) / 100;
-        if (Math.abs(diff) >= 0.01) {
-          cust.tx.push({
-            id: uid("t"),
-            type: diff > 0 ? "debt" : "pay",
-            amount: Math.abs(diff),
-            note: "رصيد مرحّل",
-            date: todayStr(),
-            time: "",
-            ts: Date.now()
+    const DIGIT_TEMPLATES = (() => {
+      const tpls = [];
+      const c = document.createElement('canvas');
+      c.width = 56; c.height = 56;
+      const ctx = c.getContext('2d', { willReadFrequently: true });
+      const W = 16, H = 24;
+      const fonts = [
+        'bold 34px Arial, sans-serif',
+        'bold 34px Tahoma, sans-serif',
+        'bold 34px "Segoe UI", sans-serif',
+        'bold 34px Verdana, sans-serif'
+      ];
+
+      for (const font of fonts) {
+        for (let d = 0; d <= 9; d++) {
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, 56, 56);
+          ctx.fillStyle = '#000';
+          ctx.font = font;
+          ctx.textBaseline = 'top';
+          ctx.fillText(String(d), 10, 8);
+
+          const img = ctx.getImageData(0, 0, 56, 56).data;
+          let minX = 56, minY = 56, maxX = -1, maxY = -1;
+          for (let y = 0; y < 56; y++) {
+            for (let x = 0; x < 56; x++) {
+              if (img[(y * 56 + x) * 4] < 160) {
+                if (x < minX) minX = x; if (x > maxX) maxX = x;
+                if (y < minY) minY = y; if (y > maxY) maxY = y;
+              }
+            }
+          }
+          const bw = maxX - minX + 1, bh = maxY - minY + 1;
+          const grid = new Float32Array(W * H);
+
+          for (let gy = 0; gy < H; gy++) {
+            const yStart = minY + (gy * bh) / H;
+            const yEnd = minY + ((gy + 1) * bh) / H;
+            for (let gx = 0; gx < W; gx++) {
+              const xStart = minX + (gx * bw) / W;
+              const xEnd = minX + ((gx + 1) * bw) / W;
+              let acc = 0, samples = 0;
+              for (let sy = Math.floor(yStart); sy < Math.ceil(yEnd); sy++) {
+                for (let sx = Math.floor(xStart); sx < Math.ceil(xEnd); sx++) {
+                  const val = 1 - img[(Math.min(55, sy) * 56 + Math.min(55, sx)) * 4] / 255;
+                  acc += val > 0.25 ? val : 0;
+                  samples++;
+                }
+              }
+              grid[gy * W + gx] = samples ? acc / samples : 0;
+            }
+          }
+          tpls.push({
+            digit: String(d),
+            aspect: bw / bh,
+            grid,
+            zones: computeZoneFeatures(grid, W, H)
           });
         }
-      });
-      migrated = true;
-    }
-  } catch (e) {}
+      }
+      return tpls;
+    })();
 
-  // 2) الترحيل من التطبيق القديم (debt_v2 ثم debt_v1)
-  try {
-    const rawV2 = localStorage.getItem("debt_v2") || localStorage.getItem("debt_v1");
-    if (rawV2) {
-      const old = JSON.parse(rawV2);
-      if (old.tpl) {
-        if (old.tpl.friendly) state.settings.tpl.friendly = old.tpl.friendly;
-        if (old.tpl.limit) {
-          state.settings.tpl.limit = old.tpl.limit
-            .replace(/الحد الائتماني المسموح/g, "الحد المسموح")
-            .replace(/الحد الائتماني/g, "الحد المسموح");
+    function readDigitsInRegion(ctx, rx, ry, rw, rh) {
+      rx = Math.floor(rx); ry = Math.floor(ry);
+      rw = Math.max(4, Math.floor(rw)); rh = Math.max(4, Math.floor(rh));
+      const data = ctx.getImageData(rx, ry, rw, rh).data;
+
+      const gray = new Uint8Array(rw * rh);
+      let minG = 255, maxG = 0;
+      for (let i = 0; i < rw * rh; i++) {
+        const g = (data[i * 4] * 77 + data[i * 4 + 1] * 150 + data[i * 4 + 2] * 29) >> 8;
+        gray[i] = g;
+        if (g < minG) minG = g;
+        if (g > maxG) maxG = g;
+      }
+      if (maxG - minG < 50) return '';
+
+      const thresh = Math.min(138, Math.max(92, Math.round(minG + (maxG - minG) * 0.42)));
+
+      const bin = new Uint8Array(rw * rh);
+      for (let y = 0; y < rh; y++) {
+        let rowDark = 0;
+        for (let x = 0; x < rw; x++) {
+          if (gray[y * rw + x] < thresh) { bin[y * rw + x] = 1; rowDark++; }
+        }
+        if (rowDark > rw * 0.55) {
+          for (let x = 0; x < rw; x++) bin[y * rw + x] = 0;
         }
       }
-      if (old.pin && !state.settings.pinHash) state.settings.pinHash = old.pin;
-      (old.customers || []).forEach(c => {
-        const existingBefore = byName.has(normAr(c.name));
-        const cust = ensureCustomer(c.name, c.phone, c.phone2, typeof c.limit === "number" ? c.limit : 0);
-        if (!cust || existingBefore) return;
-        (c.tx || []).forEach(t => {
-          const amt = Number(t.amount) || 0;
-          if (amt <= 0) return;
-          const dt = t.date ? new Date(t.date) : new Date();
-          cust.tx.push({
-            id: uid("t"),
-            type: t.type === "debt" ? "debt" : "pay",
-            amount: amt,
-            note: t.note || "",
-            due: t.due || "",
-            date: todayStr(dt),
-            time: formatTimeNow(dt),
-            ts: dt.getTime()
-          });
-        });
-      });
-      migrated = true;
-    }
-  } catch (e) {}
 
-  if (migrated) {
-    saveState();
-    showToast("✓ تم نقل بياناتك السابقة بنجاح");
-  }
-}
-
-function loadState() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      state.settings = Object.assign({}, state.settings, parsed.settings || {});
-      state.settings.tpl = {
-        friendly: (parsed.settings && parsed.settings.tpl && parsed.settings.tpl.friendly) || DEFAULT_TPL.friendly,
-        limit: (parsed.settings && parsed.settings.tpl && parsed.settings.tpl.limit) || DEFAULT_TPL.limit
-      };
-      state.customers = (parsed.customers || []).map(c => ({
-        id: c.id || uid("c"),
-        name: c.name || "",
-        phone: c.phone || "",
-        phone2: c.phone2 || "",
-        limit: typeof c.limit === "number" ? c.limit : state.settings.defaultLimit,
-        tx: Array.isArray(c.tx) ? c.tx : []
-      }));
-    } catch (e) {}
-  } else {
-    migrateFromLegacyStorage();
-  }
-
-  document.getElementById("dailyDate").value = todayStr();
-  syncSettingsInputs();
-  renderAll();
-}
-
-/* ==================== تحديث الواجهات ==================== */
-
-function renderAll() {
-  updateHeaderStats();
-  renderCustomers();
-  if (currentPage === "daily") renderDailyLog();
-  if (currentPage === "bulk") renderBulkManageList();
-  updatePinUi();
-}
-
-function updateHeaderStats() {
-  let totalDebt = 0;
-  let totalPaid = 0;
-  let overdueCount = 0;
-  let overLimitCount = 0;
-
-  state.customers.forEach(c => {
-    const s = getCustomerStats(c);
-    if (s.balance > 0) totalDebt += s.balance;
-    totalPaid += (c.tx || []).filter(t => t.type === "pay").reduce((a, t) => a + Number(t.amount), 0);
-    if (s.overdue) overdueCount++;
-    if (s.limitReached) overLimitCount++;
-  });
-
-  document.getElementById("statTotalDebt").textContent = fmtMoney(totalDebt);
-  document.getElementById("statTotalPaid").textContent = fmtMoney(totalPaid);
-  document.getElementById("statOverdue").textContent = overdueCount;
-  document.getElementById("statOverLimit").textContent = overLimitCount;
-  document.getElementById("headerCustCount").textContent = state.customers.length + " زبون";
-}
-
-function setFilter(f) {
-  currentFilter = f;
-  document.querySelectorAll("#pillsRow .pill").forEach(p => {
-    p.classList.toggle("active", p.dataset.filter === f);
-  });
-  renderCustomers();
-}
-
-function enterSearchFocusMode() {
-  if (searchFocusActive) return;
-  searchFocusActive = true;
-  document.body.classList.add("search-focus-mode");
-  document.getElementById("cancelSearchBtn").hidden = false;
-  window.scrollTo(0, 0);
-}
-
-function exitSearchFocusMode(clearQuery = false) {
-  searchFocusActive = false;
-  document.body.classList.remove("search-focus-mode");
-  document.getElementById("cancelSearchBtn").hidden = true;
-  const inp = document.getElementById("searchInput");
-  if (clearQuery) inp.value = "";
-  inp.blur();
-  renderCustomers();
-}
-
-function renderCustomers() {
-  const qRaw = document.getElementById("searchInput").value.trim();
-  const qNorm = normAr(qRaw);
-  const qDigits = arDigitsToEn(qRaw).replace(/\D/g, "");
-  const listEl = document.getElementById("customerList");
-
-  let filtered = state.customers.filter(c => {
-    if (!qRaw) return true;
-    const nameMatch = normAr(c.name).includes(qNorm);
-    const p1Match = qDigits && (c.phone || "").includes(qDigits);
-    const p2Match = qDigits && (c.phone2 || "").includes(qDigits);
-    return nameMatch || p1Match || p2Match;
-  });
-
-  // عند وضع البحث الحر نبحث في جميع الزبائن، وإلا نطبق الفلتر المختار
-  if (!searchFocusActive || !qRaw) {
-    filtered = filtered.filter(c => {
-      const s = getCustomerStats(c);
-      if (currentFilter === "limit") return s.limitReached || s.nearLimit;
-      if (currentFilter === "overdue") return s.overdue;
-      if (currentFilter === "healthy") return !s.limitReached && !s.overdue;
-      if (currentFilter === "nophone") return !c.phone && !c.phone2;
-      if (currentFilter === "zero") return s.balance === 0;
-      return true;
-    });
-  }
-
-  filtered.sort((a, b) => getCustomerBalance(b) - getCustomerBalance(a));
-
-  if (filtered.length === 0) {
-    listEl.innerHTML = `
-      <div class="card" style="text-align:center; color:var(--muted); padding:26px 16px;">
-        لا يوجد زبائن مطابقون حالياً.<br/>
-        <span style="font-size:0.84rem;">استخدم <b>البوت السريع</b> بالأعلى أو اضغط <b>+ زبون جديد</b> للبدء.</span>
-      </div>`;
-    return;
-  }
-
-  listEl.innerHTML = filtered.map(c => {
-    const s = getCustomerStats(c);
-    const isCustomLimit = s.limit > 0 && s.limit !== Number(state.settings.defaultLimit);
-    const phonesList = getCustomerPhones(c).map(p => "+" + p);
-    const phoneHtml = phonesList.length
-      ? `<span dir="ltr" style="display:inline-block;">📱 ${escapeHtml(phonesList.join(" • "))}</span>`
-      : `<span style="color:var(--warning);">📵 بدون رقم جوال</span>`;
-
-    let badges = "";
-    if (s.limitReached) badges += `<span class="badge badge-danger">وصل للحد</span>`;
-    else if (s.nearLimit) badges += `<span class="badge badge-warn">اقترب من الحد</span>`;
-    if (s.overdue) badges += `<span class="badge badge-warn">متأخر</span>`;
-    if (!badges) badges = `<span class="badge badge-success">سليم</span>`;
-    if (isCustomLimit) badges += `<span class="badge badge-info">حد خاص: ${s.limit.toLocaleString("en-US")}</span>`;
-
-    const balClass = s.balance > 0 ? "neg" : s.balance < 0 ? "pos" : "neutral";
-
-    return `
-      <div class="customer-item ${s.limitReached ? "over-limit" : ""}">
-        <div class="cust-info" onclick="openCustomerModal('${c.id}')">
-          <div class="cust-name">${escapeHtml(c.name)}</div>
-          <div class="cust-meta">${phoneHtml}</div>
-          <div class="badges-line">${badges}</div>
-        </div>
-        <div class="cust-left-group">
-          <div class="cust-balance ${balClass}" onclick="openCustomerModal('${c.id}')" style="cursor:pointer;">
-            ${fmtMoney(s.balance)}
-          </div>
-          <div class="cust-quick-icons">
-            <button type="button" class="icon-btn call-btn" title="اتصال" aria-label="اتصال بـ ${escapeHtml(c.name)}" onclick="event.stopPropagation(); callCustomer('${c.id}')">📞</button>
-            <button type="button" class="icon-btn msg-btn" title="رسالة / تذكير" aria-label="إرسال تذكير لـ ${escapeHtml(c.name)}" onclick="event.stopPropagation(); openReminderModal('${c.id}')">💬</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join("");
-}
-
-/* ==================== البوت السريع + اختيار الزبون عند التشابه ==================== */
-
-function processBot() {
-  const inputEl = document.getElementById("botInput");
-  const fbEl = document.getElementById("botFeedback");
-  const raw = inputEl.value.trim();
-  if (!raw) return;
-
-  let text = arDigitsToEn(raw);
-  let forcedPay = false;
-
-  // الصيغة الأولى: يبدأ بكلمة دفع/سداد/دفعة/قبض/واصل
-  const prefixPay = text.match(/^(دفع|سداد|دفعة|دفعه|تسديد|قبض|واصل)\s+/);
-  if (prefixPay) {
-    forcedPay = true;
-    text = text.slice(prefixPay[0].length).trim();
-  }
-
-  const numMatch = text.match(/(\d+(?:\.\d+)?)/);
-  if (!numMatch) {
-    fbEl.className = "bot-feedback error";
-    fbEl.innerHTML = `<span>⚠️ لم أجد مبلغاً. اكتب مثلاً: <b>أحمد 150 بندورة</b> أو <b>دفع أحمد 50</b></span>`;
-    return;
-  }
-
-  const amount = parseFloat(numMatch[1]);
-  if (!(amount > 0)) {
-    fbEl.className = "bot-feedback error";
-    fbEl.innerHTML = `<span>⚠️ يجب أن يكون المبلغ أكبر من صفر.</span>`;
-    return;
-  }
-
-  const beforeNum = text.slice(0, numMatch.index).trim();
-  const afterNum = text.slice(numMatch.index + numMatch[0].length).trim();
-
-  let name = beforeNum;
-  let note = afterNum;
-
-  if (!name && afterNum) {
-    const parts = afterNum.split(/\s+/);
-    name = parts[0];
-    note = parts.slice(1).join(" ");
-  }
-
-  if (!name) {
-    fbEl.className = "bot-feedback error";
-    fbEl.innerHTML = `<span>⚠️ يرجى كتابة اسم الزبون قبل المبلغ.</span>`;
-    return;
-  }
-
-  const suffixPay = /(دفعة|دفعه|سداد|تسديد|قبض|واصل|خصم|دفع)/.test(note);
-  const type = (forcedPay || suffixPay) ? "pay" : "debt";
-  if (!note) note = type === "pay" ? "دفعة نقدية" : "بضاعة / دين";
-
-  // البحث الجزئي الذكي بالاسم
-  const qNorm = normAr(name);
-  let matches = state.customers.filter(c => normAr(c.name).includes(qNorm));
-  if (!matches.length) {
-    const words = qNorm.split(" ").filter(Boolean);
-    matches = state.customers.filter(c => words.every(w => normAr(c.name).includes(w)));
-  }
-
-  // ترتيب المطابقات بحيث يكون التطابق التام أو البداية أولاً
-  matches.sort((a, b) => {
-    const an = normAr(a.name), bn = normAr(b.name);
-    if (an === qNorm && bn !== qNorm) return -1;
-    if (bn === qNorm && an !== qNorm) return 1;
-    return getCustomerBalance(b) - getCustomerBalance(a);
-  });
-
-  if (matches.length === 1) {
-    commitBotTransaction(matches[0], type, amount, note, false);
-    return;
-  }
-
-  if (matches.length > 1) {
-    // نافذة اختيار الزبون عند تشابه الأسماء
-    const opLabel = `${type === "debt" ? "إضافة دين" : "تسجيل دفعة"} بمبلغ ${fmtMoney(amount)}${note ? " (" + note + ")" : ""}`;
-    const html = `
-      <p style="font-size:0.84rem; color:var(--muted); margin-bottom:10px;">
-        يوجد أكثر من زبون يطابق الاسم <b>«${escapeHtml(name)}»</b>.<br/>
-        العملية: <b style="color:var(--primary-dark);">${escapeHtml(opLabel)}</b>
-      </p>
-      <div id="disambList">
-        ${matches.map(c => {
-          const b = getCustomerBalance(c);
-          return `
-            <button type="button" class="pick-item" data-pick-id="${c.id}">
-              <div style="min-width:0;">
-                <b>${escapeHtml(c.name)}</b><br/>
-                <small style="color:var(--muted);" dir="ltr">${c.phone ? "+" + escapeHtml(c.phone) : "بدون رقم"}</small>
-              </div>
-              <div class="cust-balance ${b > 0 ? "neg" : "pos"}" style="font-size:0.95rem;">${fmtMoney(b)}</div>
-            </button>
-          `;
-        }).join("")}
-      </div>
-      <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:8px;">
-        <button type="button" class="btn btn-teal-outline btn-sm" id="btnCreateNewFromBot">+ إنشاء زبون جديد باسم «${escapeHtml(name)}»</button>
-        <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('genericModal')">إلغاء</button>
-      </div>
-    `;
-    showGenericModal("اختر الزبون المقصود", html);
-    document.querySelectorAll("[data-pick-id]").forEach(btn => {
-      btn.onclick = () => {
-        const chosen = state.customers.find(x => x.id === btn.dataset.pickId);
-        closeModal("genericModal");
-        if (chosen) commitBotTransaction(chosen, type, amount, note, false);
-      };
-    });
-    document.getElementById("btnCreateNewFromBot").onclick = () => {
-      closeModal("genericModal");
-      const newCust = createQuickCustomerFromBot(name);
-      commitBotTransaction(newCust, type, amount, note, true);
-    };
-    return;
-  }
-
-  // لا يوجد أي زبون مطابق — تأكيد إضافة زبون جديد فوراً
-  const opLabel = `${type === "debt" ? "دين جديد" : "دفعة"} بمبلغ ${fmtMoney(amount)}`;
-  const html = `
-    <p style="font-size:0.88rem; margin-bottom:14px;">
-      الزبون <b>«${escapeHtml(name)}»</b> غير مسجل في الدفتر حالياً.<br/>
-      هل تريد إضافته كزبون جديد وتسجيل <b>${escapeHtml(opLabel)}</b> (${escapeHtml(note)}) له مباشرة؟
-    </p>
-    <div class="grid-2">
-      <button type="button" class="btn btn-primary" id="btnConfirmNewBot">نعم، أضفه وسجّل</button>
-      <button type="button" class="btn btn-outline" onclick="closeModal('genericModal')">إلغاء</button>
-    </div>
-  `;
-  showGenericModal("زبون غير مسجل", html);
-  document.getElementById("btnConfirmNewBot").onclick = () => {
-    closeModal("genericModal");
-    const newCust = createQuickCustomerFromBot(name);
-    commitBotTransaction(newCust, type, amount, note, true);
-  };
-}
-
-function createQuickCustomerFromBot(name) {
-  const cust = {
-    id: uid("c"),
-    name: name.trim(),
-    phone: "",
-    phone2: "",
-    limit: Number(state.settings.defaultLimit) || 0,
-    tx: []
-  };
-  state.customers.push(cust);
-  return cust;
-}
-
-function commitBotTransaction(cust, type, amount, note, isNewCustomer) {
-  const now = new Date();
-  const tx = {
-    id: uid("t"),
-    type,
-    amount: Math.round(amount * 100) / 100,
-    note,
-    date: todayStr(now),
-    time: formatTimeNow(now),
-    ts: now.getTime()
-  };
-  cust.tx.push(tx);
-  lastBotUndo = { customerId: cust.id, txId: tx.id, createdCustomer: isNewCustomer };
-  saveState();
-  renderAll();
-  document.getElementById("botInput").value = "";
-
-  const s = getCustomerStats(cust);
-  const actionWord = type === "debt" ? "إضافة دين" : "تسجيل دفعة";
-  const limitWarn = s.limitReached ? " 🚨 [وصل للحد المسموح!]" : "";
-  const fbEl = document.getElementById("botFeedback");
-  fbEl.className = "bot-feedback success";
-  fbEl.innerHTML = `
-    <span>✅ تم ${actionWord} <b>${fmtMoney(tx.amount)}</b> لـ <b>${escapeHtml(cust.name)}</b> (${escapeHtml(note)})${isNewCustomer ? " [زبون جديد]" : ""} • الرصيد: <b>${fmtMoney(s.balance)}</b>${limitWarn}</span>
-    <button type="button" class="btn btn-outline btn-sm" onclick="undoLastBot()">تراجع</button>
-  `;
-}
-
-function undoLastBot() {
-  if (!lastBotUndo) return;
-  const cust = state.customers.find(c => c.id === lastBotUndo.customerId);
-  if (cust) {
-    cust.tx = cust.tx.filter(t => t.id !== lastBotUndo.txId);
-    if (lastBotUndo.createdCustomer && cust.tx.length === 0) {
-      state.customers = state.customers.filter(c => c.id !== cust.id);
-    }
-  }
-  lastBotUndo = null;
-  saveState();
-  renderAll();
-  const fbEl = document.getElementById("botFeedback");
-  fbEl.className = "bot-feedback";
-  fbEl.innerHTML = "";
-  showToast("↩️ تم التراجع عن العملية بنجاح");
-}
-
-/* ==================== إضافة زبون جديد ==================== */
-
-function openAddCustomerModal() {
-  document.getElementById("newCustName").value = "";
-  document.getElementById("newCustPhone1Num").value = "";
-  document.getElementById("newCustPhone1CC").value = "970";
-  document.getElementById("newCustPhone2Num").value = "";
-  document.getElementById("newCustPhone2CC").value = "970";
-  document.getElementById("newCustPhone2Wrap").hidden = true;
-  document.getElementById("newCustInitial").value = "0";
-  document.getElementById("newCustLimit").value = state.settings.defaultLimit;
-  const errEl = document.getElementById("newCustErr");
-  errEl.hidden = true;
-  errEl.textContent = "";
-  openModal("addCustModal");
-  setTimeout(() => document.getElementById("newCustName").focus(), 60);
-}
-
-function createNewCustomer() {
-  const errEl = document.getElementById("newCustErr");
-  const showErr = m => { errEl.textContent = m; errEl.hidden = !m; };
-  showErr("");
-
-  const name = document.getElementById("newCustName").value.trim();
-  const p1Num = sanitizePhoneInputEl(document.getElementById("newCustPhone1Num"), document.getElementById("newCustPhone1CC"));
-  const p1CC = document.getElementById("newCustPhone1CC").value;
-  const p2Num = sanitizePhoneInputEl(document.getElementById("newCustPhone2Num"), document.getElementById("newCustPhone2CC"));
-  const p2CC = document.getElementById("newCustPhone2CC").value;
-  const initial = parseFloat(arDigitsToEn(document.getElementById("newCustInitial").value)) || 0;
-  const limitRaw = arDigitsToEn(document.getElementById("newCustLimit").value).trim();
-  const limit = limitRaw === "" ? (Number(state.settings.defaultLimit) || 0) : Math.max(0, parseFloat(limitRaw) || 0);
-
-  if (!name) return showErr("يرجى إدخال اسم الزبون.");
-  if (p1Num.length > 0 && p1Num.length !== 9) {
-    document.getElementById("newCustPhone1Num").focus();
-    return showErr("رقم الجوال الأول يجب أن يتكون من 9 أرقام بالضبط بدون صفر بالبداية (مثال: 590000000).");
-  }
-  if (p2Num.length > 0 && p2Num.length !== 9) {
-    document.getElementById("newCustPhone2Num").focus();
-    return showErr("رقم الجوال الثاني يجب أن يتكون من 9 أرقام بالضبط بدون صفر بالبداية.");
-  }
-
-  const cust = {
-    id: uid("c"),
-    name,
-    phone: p1Num.length === 9 ? (p1CC + p1Num) : "",
-    phone2: p2Num.length === 9 ? (p2CC + p2Num) : "",
-    limit,
-    tx: []
-  };
-
-  if (initial > 0) {
-    const now = new Date();
-    cust.tx.push({
-      id: uid("t"),
-      type: "debt",
-      amount: Math.round(initial * 100) / 100,
-      note: "رصيد افتتاحي",
-      date: todayStr(now),
-      time: formatTimeNow(now),
-      ts: now.getTime()
-    });
-  }
-
-  state.customers.push(cust);
-  saveState();
-  renderAll();
-  closeModal("addCustModal");
-  showToast(`✓ تم إضافة «${name}» بنجاح`);
-}
-
-/* ==================== نافذة تفاصيل الزبون وتعديل بياناته ==================== */
-
-function openCustomerModal(id) {
-  activeCustomerId = id;
-  const cust = state.customers.find(c => c.id === id);
-  if (!cust) return;
-
-  const sp1 = splitPhone(cust.phone);
-  const sp2 = splitPhone(cust.phone2);
-
-  document.getElementById("modalCustTitle").textContent = cust.name;
-  document.getElementById("editCustName").value = cust.name;
-  document.getElementById("editCustLimit").value = getCustomerLimit(cust);
-  document.getElementById("editCustPhone1CC").value = sp1.cc;
-  document.getElementById("editCustPhone1Num").value = sp1.num;
-  document.getElementById("editCustPhone2CC").value = sp2.cc;
-  document.getElementById("editCustPhone2Num").value = sp2.num;
-  document.getElementById("editCustPhone2Wrap").hidden = !(sp1.num.length > 0 || sp2.num.length > 0);
-  document.getElementById("editPhoneHint").hidden = true;
-  document.getElementById("autoSaveStatus").textContent = "✓ التعديلات تُحفظ تلقائياً";
-
-  refreshCustomerModalContent(cust);
-  openModal("custModal");
-}
-
-function refreshCustomerModalContent(cust) {
-  const s = getCustomerStats(cust);
-  const phones = getCustomerPhones(cust);
-  document.getElementById("modalCustTitle").textContent = cust.name;
-  document.getElementById("modalCustPhonesDisplay").innerHTML = phones.length
-    ? phones.map((p, i) => `<span dir="ltr" style="display:inline-block; margin-inline-end:8px;">📱 +${escapeHtml(p)}${i === 1 ? " (ثاني)" : ""}</span>`).join("")
-    : "لا يوجد رقم جوال محفوظ";
-
-  const barCls = s.limitReached ? "danger" : s.nearLimit ? "warn" : "";
-  const pct = Math.min(100, Math.round(s.ratio));
-  const limitBarHtml = s.limit > 0
-    ? `<div class="limit-bar-wrap">
-        <div class="limit-bar-meta">
-          <span>استهلاك الحد المسموح: <b>${pct}%</b></span>
-          <span>الحد: <b>${fmtMoney(s.limit)}</b></span>
-        </div>
-        <div class="limit-bar ${barCls}"><i style="width:${pct}%"></i></div>
-      </div>`
-    : `<div style="font-size:0.75rem; color:var(--muted); margin-top:6px;">بدون حد مسموح محدد</div>`;
-
-  document.getElementById("modalCustSummary").innerHTML = `
-    <div style="padding:12px; border-radius:12px; background:${s.limitReached ? "var(--danger-bg)" : "var(--primary-soft)"}; border:1.5px solid ${s.limitReached ? "var(--danger)" : "#99f6e4"};">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-        <div>
-          <div style="font-size:0.8rem; color:var(--muted);">الرصيد الحالي</div>
-          <div style="font-size:1.5rem; font-weight:900; color:${s.balance > 0 ? "var(--danger)" : "var(--success)"};">
-            ${fmtMoney(s.balance)}
-          </div>
-        </div>
-        <div style="text-align:left;">
-          ${s.limitReached ? `<span class="badge badge-danger">⚠️ وصل للحد المسموح</span>` : s.overdue ? `<span class="badge badge-warn">⏰ متأخر</span>` : `<span class="badge badge-success">✅ سليم</span>`}
-        </div>
-      </div>
-      ${limitBarHtml}
-    </div>
-  `;
-
-  const txs = (cust.tx || []).slice().sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.ts || 0) - (a.ts || 0));
-  document.getElementById("modalTxCount").textContent = txs.length + " عملية";
-  const histEl = document.getElementById("modalTxHistory");
-  if (txs.length === 0) {
-    histEl.innerHTML = `<div style="color:var(--muted); font-size:0.84rem; text-align:center; padding:14px;">لا توجد حركات مسجلة بعد.</div>`;
-  } else {
-    histEl.innerHTML = txs.map(t => `
-      <div class="log-item">
-        <div style="min-width:0; flex:1;">
-          <div style="font-size:0.86rem; font-weight:700;">
-            <span class="${t.type === "debt" ? "tag-debt" : "tag-pay"}">${t.type === "debt" ? "دين" : "دفعة"}</span>
-            <span style="margin-inline-start:4px;">${escapeHtml(t.note || (t.type === "debt" ? "دين" : "دفعة"))}</span>
-          </div>
-          <div style="font-size:0.74rem; color:var(--muted); margin-top:2px;">
-            <span dir="ltr">${escapeHtml(t.date || "")}</span>${t.time ? " • " + escapeHtml(t.time) : ""}
-          </div>
-        </div>
-        <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
-          <b style="color:${t.type === "debt" ? "var(--danger)" : "var(--success)"}; font-size:0.95rem;">
-            ${t.type === "debt" ? "+" : "-"}${fmtMoney(t.amount)}
-          </b>
-          <button type="button" class="btn btn-outline btn-sm" style="padding:4px 8px; font-size:0.74rem; color:var(--danger);" onclick="requestDeleteTx('${cust.id}', '${t.id}')">حذف</button>
-        </div>
-      </div>
-    `).join("");
-  }
-}
-
-function autoSaveCustomerMeta() {
-  const cust = state.customers.find(c => c.id === activeCustomerId);
-  if (!cust) return;
-
-  const newName = document.getElementById("editCustName").value.trim();
-  const limitVal = parseFloat(arDigitsToEn(document.getElementById("editCustLimit").value));
-  const p1Num = document.getElementById("editCustPhone1Num").value.trim();
-  const p1CC = document.getElementById("editCustPhone1CC").value;
-  const p2Num = document.getElementById("editCustPhone2Num").value.trim();
-  const p2CC = document.getElementById("editCustPhone2CC").value;
-
-  document.getElementById("editCustPhone2Wrap").hidden = !(p1Num.length > 0 || p2Num.length > 0);
-
-  if (newName) cust.name = newName;
-  if (!isNaN(limitVal) && limitVal >= 0) cust.limit = limitVal;
-
-  const hintEl = document.getElementById("editPhoneHint");
-  let phoneIncomplete = false;
-
-  if (p1Num.length === 0) cust.phone = "";
-  else if (p1Num.length === 9) cust.phone = p1CC + p1Num;
-  else phoneIncomplete = true;
-
-  if (p2Num.length === 0) cust.phone2 = "";
-  else if (p2Num.length === 9) cust.phone2 = p2CC + p2Num;
-  else phoneIncomplete = true;
-
-  if (phoneIncomplete) {
-    hintEl.textContent = "ملاحظة: يتم حفظ رقم الجوال تلقائياً عند إكمال 9 أرقام بالضبط.";
-    hintEl.hidden = false;
-  } else {
-    hintEl.hidden = true;
-  }
-
-  saveState();
-  renderAll();
-  refreshCustomerModalContent(cust);
-  document.getElementById("autoSaveStatus").textContent = "✓ تم الحفظ تلقائياً";
-}
-
-function requestDeleteTx(custId, txId) {
-  showGenericModal("حذف العملية", `
-    <p style="font-size:0.9rem; margin-bottom:14px;">هل أنت متأكد من حذف هذه العملية من سجل الزبون؟</p>
-    <div class="grid-2">
-      <button type="button" class="btn btn-danger" id="btnConfirmDelTx">نعم، احذف</button>
-      <button type="button" class="btn btn-outline" onclick="closeModal('genericModal')">إلغاء</button>
-    </div>
-  `);
-  document.getElementById("btnConfirmDelTx").onclick = () => {
-    const cust = state.customers.find(c => c.id === custId);
-    if (cust) {
-      cust.tx = cust.tx.filter(t => t.id !== txId);
-      saveState();
-      renderAll();
-      refreshCustomerModalContent(cust);
-      showToast("✓ تم حذف العملية");
-    }
-    closeModal("genericModal");
-  };
-}
-
-function requestDeleteCustomer() {
-  const cust = state.customers.find(c => c.id === activeCustomerId);
-  if (!cust) return;
-  const bal = getCustomerBalance(cust);
-  const needsWord = bal > 0;
-
-  showGenericModal("حذف الزبون", `
-    <p style="font-size:0.88rem; margin-bottom:12px;">
-      ${bal > 0 ? `<b style="color:var(--danger);">⚠️ تنبيه: على هذا الزبون رصيد مستحق قدره ${fmtMoney(bal)}.</b><br/>` : ""}
-      هل تريد حذف الزبون <b>«${escapeHtml(cust.name)}»</b> وكل سجله نهائياً؟
-    </p>
-    ${needsWord ? `
-      <div class="form-group">
-        <label for="delConfirmWord">للتأكيد النهائي اكتب كلمة <b>حذف</b>:</label>
-        <input type="text" id="delConfirmWord" placeholder="حذف" autocomplete="off" />
-      </div>
-    ` : ""}
-    <div class="grid-2">
-      <button type="button" class="btn btn-danger" id="btnConfirmDelCust">تأكيد الحذف</button>
-      <button type="button" class="btn btn-outline" onclick="closeModal('genericModal')">إلغاء</button>
-    </div>
-  `);
-
-  document.getElementById("btnConfirmDelCust").onclick = () => {
-    if (needsWord) {
-      const val = (document.getElementById("delConfirmWord").value || "").trim();
-      if (val !== "حذف") {
-        showToast("⚠️ اكتب كلمة «حذف» للتأكيد");
-        return;
-      }
-    }
-    state.customers = state.customers.filter(c => c.id !== cust.id);
-    saveState();
-    renderAll();
-    closeModal("genericModal");
-    closeModal("custModal");
-    showToast("✓ تم حذف الزبون نهائياً");
-  };
-}
-
-/* ==================== نافذة إضافة دين / تسجيل دفعة ==================== */
-
-function openTxModal(mode) {
-  activeTxMode = mode;
-  const isDebt = mode === "debt";
-  document.getElementById("txModalTitle").textContent = isDebt ? "➕ إضافة دين" : "✅ تسجيل دفعة";
-  document.getElementById("txModalDateLabel").textContent = isDebt ? "تاريخ الدين" : "تاريخ الدفعة";
-  document.getElementById("txModalAmount").value = "";
-  document.getElementById("txModalDate").value = todayStr();
-  document.getElementById("txModalNote").value = "";
-  document.getElementById("txModalErr").hidden = true;
-  const btn = document.getElementById("txModalSubmitBtn");
-  btn.className = isDebt ? "btn btn-primary" : "btn btn-success";
-  btn.textContent = isDebt ? "حفظ الدين" : "حفظ الدفعة";
-  openModal("txModal");
-  setTimeout(() => document.getElementById("txModalAmount").focus(), 60);
-}
-
-function submitTxModal() {
-  const cust = state.customers.find(c => c.id === activeCustomerId);
-  if (!cust) return;
-  const errEl = document.getElementById("txModalErr");
-  const amount = parseFloat(arDigitsToEn(document.getElementById("txModalAmount").value));
-  const dateVal = document.getElementById("txModalDate").value || todayStr();
-  const note = document.getElementById("txModalNote").value.trim();
-
-  if (!(amount > 0)) {
-    errEl.textContent = "يرجى إدخال مبلغ صحيح أكبر من صفر.";
-    errEl.hidden = false;
-    return;
-  }
-
-  const now = new Date();
-  cust.tx.push({
-    id: uid("t"),
-    type: activeTxMode,
-    amount: Math.round(amount * 100) / 100,
-    note: note || (activeTxMode === "debt" ? "دين" : "دفعة"),
-    date: dateVal,
-    time: dateVal === todayStr() ? formatTimeNow(now) : "",
-    ts: dateStrToTs(dateVal)
-  });
-
-  saveState();
-  renderAll();
-  refreshCustomerModalContent(cust);
-  closeModal("txModal");
-  showToast(activeTxMode === "debt" ? "✓ تم إضافة الدين بنجاح" : "✓ تم تسجيل الدفعة بنجاح");
-}
-
-/* ==================== الاتصال والتذكير (واتساب / SMS) ==================== */
-
-function callCustomer(custId) {
-  const cust = state.customers.find(c => c.id === custId);
-  if (!cust) return;
-  const phones = getCustomerPhones(cust);
-  if (phones.length === 0) {
-    showToast("⚠️ لا يوجد رقم جوال محفوظ لهذا الزبون");
-    openCustomerModal(cust.id);
-    return;
-  }
-  if (phones.length === 1) {
-    window.location.href = "tel:+" + phones[0];
-    return;
-  }
-  showGenericModal("اختر رقم الجوال للاتصال", `
-    <p style="font-size:0.84rem; color:var(--muted); margin-bottom:10px;">الزبون: <b>${escapeHtml(cust.name)}</b></p>
-    ${phones.map((p, i) => `
-      <button type="button" class="pick-item" onclick="closeModal('genericModal'); window.location.href='tel:+${escapeHtml(p)}'">
-        <span>📞 رقم الجوال ${i === 0 ? "الأول" : "الثاني"}</span>
-        <b dir="ltr">+${escapeHtml(p)}</b>
-      </button>
-    `).join("")}
-    <button type="button" class="btn btn-outline" style="width:100%; margin-top:6px;" onclick="closeModal('genericModal')">إلغاء</button>
-  `);
-}
-
-function buildReminderText(cust, tone) {
-  const s = getCustomerStats(cust);
-  const tpl = (state.settings.tpl && state.settings.tpl[tone]) || DEFAULT_TPL[tone] || DEFAULT_TPL.friendly;
-  return tpl
-    .split("{name}").join(cust.name)
-    .split("{amount}").join(fmtMoney(s.balance))
-    .split("{limit}").join(fmtMoney(s.limit))
-    .split("{shop}").join(state.settings.shopName || "دفتر الديون الذكي");
-}
-
-function openReminderModal(custId) {
-  const cust = state.customers.find(c => c.id === custId);
-  if (!cust) return;
-  const s = getCustomerStats(cust);
-  const phones = getCustomerPhones(cust);
-  const remBody = document.getElementById("remBody");
-  document.getElementById("remModalTitle").textContent = "💬 إرسال تذكير — " + cust.name;
-
-  let selChan = "wa";
-  let selPhone = phones[0] || "";
-  let selTone = s.limitReached ? "limit" : "friendly";
-
-  const phoneSectionHtml = phones.length === 0
-    ? `<div style="background:var(--warning-bg); border:1px solid var(--warning-border); padding:10px; border-radius:10px; margin-bottom:10px;">
-        <div style="font-size:0.8rem; font-weight:700; color:#92400e; margin-bottom:6px;">
-          📵 لا يوجد رقم محفوظ لـ «${escapeHtml(cust.name)}». أدخله الآن ليتم حفظه دائماً:
-        </div>
-        <div class="phone-field-row">
-          <input type="tel" id="remQuickPhoneNum" class="phone-num-input" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" placeholder="590000000" />
-          <select id="remQuickPhoneCC" class="phone-cc-select">
-            <option value="970">فلسطين +970</option>
-            <option value="972">إسرائيل +972</option>
-          </select>
-        </div>
-      </div>`
-    : (phones.length > 1
-      ? `<div class="form-group">
-          <label>اختر رقم الجوال:</label>
-          <div class="seg-row" id="remPhoneSeg">
-            ${phones.map((p, i) => `<button type="button" class="seg-btn ${i === 0 ? "active" : ""}" data-rph="${escapeHtml(p)}" dir="ltr">+${escapeHtml(p)}</button>`).join("")}
-          </div>
-        </div>`
-      : `<div style="font-size:0.82rem; color:var(--muted); margin-bottom:10px;">الرقم المحفوظ: <b dir="ltr">+${escapeHtml(phones[0])}</b></div>`);
-
-  remBody.innerHTML = `
-    <div class="seg-row" id="remChanSeg">
-      <button type="button" class="seg-btn active" data-rchan="wa">🟢 واتساب</button>
-      <button type="button" class="seg-btn" data-rchan="sms">💬 رسالة SMS</button>
-    </div>
-    ${phoneSectionHtml}
-    <div class="form-group">
-      <label for="remToneSel">نبرة التذكير:</label>
-      <select id="remToneSel">
-        <option value="friendly"${selTone === "friendly" ? " selected" : ""}>ودية (نص التذكير الودي)</option>
-        <option value="limit"${selTone === "limit" ? " selected" : ""}>وصل للحد المسموح (نص تنبيه وصول للحد المسموح)</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label for="remMsgTxt">نص الرسالة (يمكنك تعديله قبل الإرسال):</label>
-      <textarea id="remMsgTxt" rows="5">${escapeHtml(buildReminderText(cust, selTone))}</textarea>
-    </div>
-    <div id="remErr" class="form-err" hidden></div>
-    <div class="grid-2">
-      <button type="button" class="btn btn-primary" id="remSendBtn">إرسال الآن</button>
-      <button type="button" class="btn btn-outline" onclick="closeModal('reminderModal')">إلغاء</button>
-    </div>
-  `;
-
-  const quickInp = document.getElementById("remQuickPhoneNum");
-  const quickCC = document.getElementById("remQuickPhoneCC");
-  if (quickInp) bindStrictPhoneInput(quickInp, quickCC);
-
-  remBody.querySelectorAll("[data-rchan]").forEach(btn => {
-    btn.onclick = () => {
-      selChan = btn.dataset.rchan;
-      remBody.querySelectorAll("[data-rchan]").forEach(b => b.classList.toggle("active", b === btn));
-    };
-  });
-
-  remBody.querySelectorAll("[data-rph]").forEach(btn => {
-    btn.onclick = () => {
-      selPhone = btn.dataset.rph;
-      remBody.querySelectorAll("[data-rph]").forEach(b => b.classList.toggle("active", b === btn));
-    };
-  });
-
-  document.getElementById("remToneSel").onchange = e => {
-    selTone = e.target.value;
-    document.getElementById("remMsgTxt").value = buildReminderText(cust, selTone);
-  };
-
-  document.getElementById("remSendBtn").onclick = () => {
-    const errEl = document.getElementById("remErr");
-    errEl.hidden = true;
-    const msg = document.getElementById("remMsgTxt").value;
-
-    if (!selPhone && quickInp) {
-      const cleaned = sanitizePhoneInputEl(quickInp, quickCC);
-      if (cleaned.length > 0 && cleaned.length !== 9) {
-        errEl.textContent = "رقم الجوال يجب أن يتكون من 9 أرقام بالضبط بدون صفر بالبداية.";
-        errEl.hidden = false;
-        return;
-      }
-      if (cleaned.length === 9) {
-        selPhone = quickCC.value + cleaned;
-        cust.phone = selPhone;
-        saveState();
-        renderAll();
-        if (activeCustomerId === cust.id) refreshCustomerModalContent(cust);
-        showToast("✓ تم حفظ رقم الجوال بشكل دائم");
-      } else if (selChan === "wa") {
-        errEl.textContent = "يرجى إدخال رقم جوال (9 أرقام) للإرسال عبر واتساب.";
-        errEl.hidden = false;
-        return;
-      }
-    }
-
-    const digits = (selPhone || "").replace(/\D/g, "");
-    closeModal("reminderModal");
-    if (selChan === "wa") {
-      window.open("https://wa.me/" + digits + "?text=" + encodeURIComponent(msg), "_blank");
-    } else {
-      const sep = /iPhone|iPad|iPod/i.test(navigator.userAgent) ? "&" : "?";
-      const target = digits ? ("+" + digits) : "";
-      window.location.href = `sms:${target}${sep}body=${encodeURIComponent(msg)}`;
-    }
-  };
-
-  openModal("reminderModal");
-}
-
-/* ==================== النظرة السريعة والتذكير الجماعي ==================== */
-
-function openTop5Modal() {
-  const top = state.customers
-    .map(c => ({ c, b: getCustomerBalance(c) }))
-    .filter(x => x.b > 0)
-    .sort((a, b) => b.b - a.b)
-    .slice(0, 5);
-
-  const html = top.length
-    ? top.map((x, idx) => `
-        <button type="button" class="pick-item" onclick="closeModal('genericModal'); openCustomerModal('${x.c.id}')">
-          <div>
-            <b>${idx + 1}. ${escapeHtml(x.c.name)}</b><br/>
-            <small style="color:var(--muted);" dir="ltr">${x.c.phone ? "+" + escapeHtml(x.c.phone) : "بدون رقم"}</small>
-          </div>
-          <div class="cust-balance neg" style="font-size:0.96rem;">${fmtMoney(x.b)}</div>
-        </button>
-      `).join("")
-    : `<p style="color:var(--muted); text-align:center; padding:16px;">لا توجد ديون قائمة حالياً.</p>`;
-
-  showGenericModal("📊 أعلى 5 زبائن مديونية", html + `<button type="button" class="btn btn-outline" style="width:100%; margin-top:8px;" onclick="closeModal('genericModal')">إغلاق</button>`);
-}
-
-function openBulkReminderModal() {
-  const list = state.customers
-    .filter(c => {
-      const s = getCustomerStats(c);
-      return (s.overdue || s.limitReached) && s.balance > 0;
-    })
-    .sort((a, b) => getCustomerBalance(b) - getCustomerBalance(a));
-
-  if (!list.length) {
-    showGenericModal("📣 تذكير جماعي", `
-      <p style="color:var(--muted); text-align:center; padding:16px;">لا يوجد زبائن متأخرون أو واصلون للحد المسموح حالياً.</p>
-      <button type="button" class="btn btn-outline" style="width:100%;" onclick="closeModal('genericModal')">إغلاق</button>
-    `);
-    return;
-  }
-
-  const html = `
-    <p style="font-size:0.8rem; color:var(--muted); margin-bottom:10px;">
-      بسبب قيود المتصفح، اضغط «إرسال» لكل زبون على حدة (${list.length} زبون):
-    </p>
-    ${list.map(c => {
-      const s = getCustomerStats(c);
-      return `
-        <div class="log-item">
-          <div>
-            <b>${escapeHtml(c.name)}</b>
-            <div style="font-size:0.75rem; color:var(--danger); font-weight:700;">
-              ${fmtMoney(s.balance)} • ${s.limitReached ? "وصل للحد المسموح" : "متأخر"}
-            </div>
-          </div>
-          <button type="button" class="btn btn-teal-outline btn-sm" onclick="closeModal('genericModal'); openReminderModal('${c.id}')">💬 إرسال</button>
-        </div>
-      `;
-    }).join("")}
-    <button type="button" class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="closeModal('genericModal')">إغلاق</button>
-  `;
-  showGenericModal("📣 تذكير جماعي للمتأخرين والحد المسموح", html);
-}
-
-/* ==================== كشف الحساب (PDF + صورة PNG) ==================== */
-
-function getStatementData(cust) {
-  const s = getCustomerStats(cust);
-  const totalDebt = (cust.tx || []).filter(t => t.type === "debt").reduce((a, t) => a + Number(t.amount), 0);
-  const totalPay = (cust.tx || []).filter(t => t.type === "pay").reduce((a, t) => a + Number(t.amount), 0);
-  const txList = (cust.tx || []).slice().sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.ts || 0) - (a.ts || 0));
-  const phones = getCustomerPhones(cust).map(p => "+" + p).join(" • ");
-  return { s, totalDebt, totalPay, txList, phones, dateStr: todayStr(), shop: state.settings.shopName || "دفتر الديون الذكي" };
-}
-
-function buildStatementHtml(cust, st) {
-  const rowsHtml = st.txList.length
-    ? st.txList.map(t => `
-        <tr>
-          <td dir="ltr" style="text-align:right;">${escapeHtml(t.date || "")}</td>
-          <td style="font-weight:700; color:${t.type === "debt" ? "#dc2626" : "#16a34a"};">${t.type === "debt" ? "دين" : "دفعة"}</td>
-          <td style="font-weight:700;">${fmtMoney(t.amount)}</td>
-          <td>${escapeHtml(t.note || "—")}</td>
-        </tr>
-      `).join("")
-    : `<tr><td colspan="4" style="text-align:center; color:#64748b; padding:14px;">لا توجد عمليات مسجلة.</td></tr>`;
-
-  return `
-    <div class="stmt-preview">
-      <div class="stmt-head">
-        <div>
-          <div style="font-weight:800; font-size:1rem; color:#0f172a;">كشف حساب — ${escapeHtml(cust.name)}</div>
-          <div style="font-size:0.76rem; color:#64748b;" dir="ltr">${st.phones ? escapeHtml(st.phones) : "بدون رقم جوال"}</div>
-        </div>
-        <div style="text-align:left; font-size:0.75rem; color:#475569;">
-          <div style="font-weight:800; color:#0f766e;">${escapeHtml(st.shop)}</div>
-          <div dir="ltr">${st.dateStr}</div>
-        </div>
-      </div>
-      <div class="stmt-kpis">
-        <div class="stmt-kpi"><span>إجمالي الديون</span><b style="color:#dc2626;">${fmtMoney(st.totalDebt)}</b></div>
-        <div class="stmt-kpi"><span>إجمالي الدفعات</span><b style="color:#16a34a;">${fmtMoney(st.totalPay)}</b></div>
-        <div class="stmt-kpi"><span>الرصيد الحالي</span><b style="color:${st.s.balance > 0 ? "#dc2626" : "#16a34a"};">${fmtMoney(st.s.balance)}</b></div>
-      </div>
-      <table class="stmt-table" dir="rtl">
-        <thead>
-          <tr><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>الصنف / الملاحظة</th></tr>
-        </thead>
-        <tbody>${rowsHtml}</tbody>
-      </table>
-    </div>
-  `;
-}
-
-function openStatementModal(custId) {
-  const cust = state.customers.find(c => c.id === custId);
-  if (!cust) return;
-  activeStmtCustomerId = cust.id;
-  const st = getStatementData(cust);
-  document.getElementById("stmtModalContent").innerHTML = buildStatementHtml(cust, st);
-  openModal("stmtModal");
-}
-
-function printCurrentStatement() {
-  const cust = state.customers.find(c => c.id === activeStmtCustomerId);
-  if (!cust) return;
-  const st = getStatementData(cust);
-  const printEl = document.getElementById("printStmt");
-  printEl.innerHTML = buildStatementHtml(cust, st);
-  closeModal("stmtModal");
-  setTimeout(() => {
-    try {
-      window.print();
-    } catch (e) {
-      showToast("⚠️ تعذر فتح نافذة الطباعة، يمكنك استخدام «حفظ كصورة PNG»");
-    }
-  }, 120);
-}
-
-function drawRoundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
-
-function downloadCurrentStatementPng() {
-  const cust = state.customers.find(c => c.id === activeStmtCustomerId);
-  if (!cust) return;
-  const st = getStatementData(cust);
-
-  const W = 860;
-  const pad = 34;
-  const rowH = 42;
-  const rowsCount = Math.max(1, st.txList.length);
-  const headerH = 128;
-  const kpiH = 96;
-  const tableHeadH = 44;
-  const footerH = 62;
-  const H = headerH + kpiH + tableHeadH + rowsCount * rowH + footerH + 40;
-
-  const scale = 2;
-  const canvas = document.createElement("canvas");
-  canvas.width = W * scale;
-  canvas.height = H * scale;
-  const ctx = canvas.getContext("2d");
-  ctx.scale(scale, scale);
-  ctx.direction = "rtl";
-  ctx.textBaseline = "middle";
-
-  // خلفية بيضاء نظيفة
-  ctx.fillStyle = "#FFFFFF";
-  ctx.fillRect(0, 0, W, H);
-
-  // هيدر تركوازي أنيق
-  const grad = ctx.createLinearGradient(0, 0, W, headerH);
-  grad.addColorStop(0, "#0F766E");
-  grad.addColorStop(1, "#115E59");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, headerH);
-
-  // عنوان الزبون (يمين)
-  ctx.fillStyle = "#FFFFFF";
-  ctx.textAlign = "right";
-  ctx.font = 'bold 26px "Segoe UI", Tahoma, Arial, sans-serif';
-  ctx.fillText("كشف حساب: " + cust.name, W - pad, 44);
-
-  ctx.fillStyle = "#CCFBF1";
-  ctx.font = '16px "Segoe UI", Tahoma, Arial, sans-serif';
-  ctx.fillText(st.phones || "بدون رقم جوال", W - pad, 82);
-
-  // اسم المحل والتاريخ (يسار)
-  ctx.textAlign = "left";
-  ctx.fillStyle = "#FFFFFF";
-  ctx.font = 'bold 18px "Segoe UI", Tahoma, Arial, sans-serif';
-  ctx.fillText(st.shop, pad, 44);
-  ctx.fillStyle = "#CCFBF1";
-  ctx.font = '15px "Segoe UI", Tahoma, Arial, sans-serif';
-  ctx.fillText("تاريخ الطباعة: " + st.dateStr, pad, 82);
-
-  // 3 بطاقات ملخص
-  const kpiY = headerH + 18;
-  const gap = 14;
-  const boxW = (W - pad * 2 - gap * 2) / 3;
-  const kpis = [
-    { label: "إجمالي الديون", val: fmtMoney(st.totalDebt), col: "#DC2626", bg: "#FEF2F2", bd: "#FCA5A5" },
-    { label: "إجمالي الدفعات", val: fmtMoney(st.totalPay), col: "#16A34A", bg: "#F0FDF4", bd: "#BBF7D0" },
-    { label: "الرصيد الحالي", val: fmtMoney(st.s.balance), col: st.s.balance > 0 ? "#DC2626" : "#16A34A", bg: "#F0FDFA", bd: "#99F6E4" }
-  ];
-
-  kpis.forEach((k, idx) => {
-    const x = W - pad - (idx + 1) * boxW - idx * gap;
-    ctx.fillStyle = k.bg;
-    ctx.strokeStyle = k.bd;
-    ctx.lineWidth = 1.5;
-    drawRoundRect(ctx, x, kpiY, boxW, 74, 12);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#475569";
-    ctx.font = 'bold 14px "Segoe UI", Tahoma, Arial, sans-serif';
-    ctx.fillText(k.label, x + boxW / 2, kpiY + 24);
-
-    ctx.fillStyle = k.col;
-    ctx.font = 'bold 20px "Segoe UI", Tahoma, Arial, sans-serif';
-    ctx.fillText(k.val, x + boxW / 2, kpiY + 52);
-  });
-
-  // رأس الجدول
-  const tblY = kpiY + 94;
-  const tblW = W - pad * 2;
-  ctx.fillStyle = "#115E59";
-  ctx.fillRect(pad, tblY, tblW, tableHeadH);
-
-  const colDateX = W - pad - 16;
-  const colTypeX = W - pad - 160;
-  const colAmtX = W - pad - 265;
-  const colNoteX = W - pad - 425;
-
-  ctx.fillStyle = "#FFFFFF";
-  ctx.textAlign = "right";
-  ctx.font = 'bold 16px "Segoe UI", Tahoma, Arial, sans-serif';
-  ctx.fillText("التاريخ", colDateX, tblY + tableHeadH / 2);
-  ctx.fillText("النوع", colTypeX, tblY + tableHeadH / 2);
-  ctx.fillText("المبلغ", colAmtX, tblY + tableHeadH / 2);
-  ctx.fillText("الصنف / الملاحظة", colNoteX, tblY + tableHeadH / 2);
-
-  // صفوف الجدول
-  let y = tblY + tableHeadH;
-  if (!st.txList.length) {
-    ctx.fillStyle = "#F8FAFC";
-    ctx.fillRect(pad, y, tblW, rowH);
-    ctx.fillStyle = "#64748B";
-    ctx.textAlign = "center";
-    ctx.font = '16px "Segoe UI", Tahoma, Arial, sans-serif';
-    ctx.fillText("لا توجد عمليات مسجلة.", W / 2, y + rowH / 2);
-    y += rowH;
-  } else {
-    st.txList.forEach((t, i) => {
-      ctx.fillStyle = i % 2 === 0 ? "#FFFFFF" : "#F8FAFC";
-      ctx.fillRect(pad, y, tblW, rowH);
-      ctx.strokeStyle = "#E2E8F0";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(pad, y + rowH);
-      ctx.lineTo(W - pad, y + rowH);
-      ctx.stroke();
-
-      const cy = y + rowH / 2;
-      ctx.textAlign = "right";
-      ctx.fillStyle = "#0F172A";
-      ctx.font = '15px "Segoe UI", Tahoma, Arial, sans-serif';
-      ctx.fillText(t.date || "", colDateX, cy);
-
-      ctx.fillStyle = t.type === "debt" ? "#DC2626" : "#16A34A";
-      ctx.font = 'bold 15px "Segoe UI", Tahoma, Arial, sans-serif';
-      ctx.fillText(t.type === "debt" ? "دين" : "دفعة", colTypeX, cy);
-
-      ctx.fillStyle = "#0F172A";
-      ctx.font = 'bold 15px "Segoe UI", Tahoma, Arial, sans-serif';
-      ctx.fillText(fmtMoney(t.amount), colAmtX, cy);
-
-      ctx.fillStyle = "#475569";
-      ctx.font = '14px "Segoe UI", Tahoma, Arial, sans-serif';
-      let note = t.note || "—";
-      if (note.length > 36) note = note.slice(0, 35) + "…";
-      ctx.fillText(note, colNoteX, cy);
-
-      y += rowH;
-    });
-  }
-
-  ctx.strokeStyle = "#CBD5E1";
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(pad, tblY, tblW, y - tblY);
-
-  ctx.fillStyle = "#64748B";
-  ctx.textAlign = "center";
-  ctx.font = '13px "Segoe UI", Tahoma, Arial, sans-serif';
-  ctx.fillText("تم إنشاء هذا الكشف عبر " + st.shop + " — " + st.dateStr, W / 2, y + 32);
-
-  const safeName = cust.name.replace(/[\\/:*?"<>|]/g, "_");
-  const filename = `كشف_حساب_${safeName}_${st.dateStr}.png`;
-  canvas.toBlob(blob => {
-    if (blob) {
-      downloadBlob(blob, filename);
-      showToast("✓ تم حفظ كشف الحساب كصورة PNG");
-    }
-  }, "image/png");
-}
-
-/* ==================== صفحة مبيعات اليوم والسجل اليومي ==================== */
-
-function jumpToToday() {
-  document.getElementById("dailyDate").value = todayStr();
-  renderDailyLog();
-}
-
-function renderDailyLog() {
-  const selectedDate = document.getElementById("dailyDate").value || todayStr();
-  const entries = [];
-  let debtSum = 0;
-  let paySum = 0;
-
-  state.customers.forEach(c => {
-    (c.tx || []).forEach(t => {
-      if (t.date === selectedDate) {
-        entries.push({ c, t });
-        if (t.type === "debt") debtSum += Number(t.amount);
-        else paySum += Number(t.amount);
-      }
-    });
-  });
-
-  entries.sort((a, b) => (b.t.ts || 0) - (a.t.ts || 0));
-
-  document.getElementById("dailyDebtSum").textContent = fmtMoney(debtSum);
-  document.getElementById("dailyPaySum").textContent = fmtMoney(paySum);
-  document.getElementById("dailyNetSum").textContent = fmtMoney(debtSum - paySum);
-  document.getElementById("dailyCountLbl").textContent = entries.length + " عملية";
-
-  const listEl = document.getElementById("dailyLogList");
-  if (entries.length === 0) {
-    listEl.innerHTML = `<div style="text-align:center; color:var(--muted); padding:22px 10px; font-size:0.88rem;">لا توجد مبيعات أو حركات مسجلة في هذا التاريخ (<span dir="ltr">${escapeHtml(selectedDate)}</span>).</div>`;
-    return;
-  }
-
-  listEl.innerHTML = entries.map(({ c, t }) => `
-    <div class="log-item clickable" onclick="openCustomerModal('${c.id}')">
-      <div style="min-width:0; flex:1;">
-        <div style="font-weight:800; font-size:0.92rem;">
-          ${escapeHtml(c.name)}
-          <span class="${t.type === "debt" ? "tag-debt" : "tag-pay"}" style="margin-inline-start:5px;">${t.type === "debt" ? "دين +" : "دفعة -"}</span>
-        </div>
-        <div style="font-size:0.78rem; color:var(--muted); margin-top:2px;">
-          ${escapeHtml(t.note || "—")}${t.time ? " • 🕒 " + escapeHtml(t.time) : ""}
-        </div>
-      </div>
-      <div style="font-weight:900; font-size:0.98rem; white-space:nowrap; color:${t.type === "debt" ? "var(--danger)" : "var(--success)"};">
-        ${t.type === "debt" ? "+" : "-"}${fmtMoney(t.amount)}
-      </div>
-    </div>
-  `).join("");
-}
-
-/* ==================== صفحة الأرقام والحدود والاستيراد النصي ==================== */
-
-function renderBulkManageList() {
-  const container = document.getElementById("bulkManageList");
-  const qRaw = (document.getElementById("bulkManageSearch").value || "").trim();
-  const qNorm = normAr(qRaw);
-  const qDigits = arDigitsToEn(qRaw).replace(/\D/g, "");
-
-  const list = state.customers
-    .filter(c => {
-      if (!qRaw) return true;
-      return normAr(c.name).includes(qNorm) || (qDigits && ((c.phone || "").includes(qDigits) || (c.phone2 || "").includes(qDigits)));
-    })
-    .sort((a, b) => getCustomerBalance(b) - getCustomerBalance(a));
-
-  if (!list.length) {
-    container.innerHTML = `<div style="text-align:center; color:var(--muted); padding:18px; font-size:0.86rem;">لا يوجد زبائن لعرضهم.</div>`;
-    return;
-  }
-
-  container.innerHTML = list.map(c => {
-    const sp1 = splitPhone(c.phone);
-    const sp2 = splitPhone(c.phone2);
-    const b = getCustomerBalance(c);
-    return `
-      <div class="bulk-card-item" data-bc="${c.id}">
-        <div class="bulk-card-head">
-          <b style="font-size:0.94rem; cursor:pointer;" onclick="openCustomerModal('${c.id}')">${escapeHtml(c.name)}</b>
-          <span style="font-size:0.84rem; font-weight:800; color:${b > 0 ? "var(--danger)" : "var(--success)"};">${fmtMoney(b)}</span>
-        </div>
-        <div class="bulk-grid">
-          <div>
-            <span class="bulk-field-lbl">رقم الجوال 1 (9 أرقام):</span>
-            <div class="phone-field-row">
-              <input type="tel" class="phone-num-input bulk-p1-num" data-id="${c.id}" inputmode="numeric" pattern="[0-9]*" maxlength="9" placeholder="590000000" value="${escapeHtml(sp1.num)}" />
-              <select class="phone-cc-select bulk-p1-cc" data-id="${c.id}">
-                <option value="970"${sp1.cc === "970" ? " selected" : ""}>فلسطين +970</option>
-                <option value="972"${sp1.cc === "972" ? " selected" : ""}>إسرائيل +972</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <span class="bulk-field-lbl">رقم الجوال 2 (9 أرقام - اختياري):</span>
-            <div class="phone-field-row">
-              <input type="tel" class="phone-num-input bulk-p2-num" data-id="${c.id}" inputmode="numeric" pattern="[0-9]*" maxlength="9" placeholder="590000000" value="${escapeHtml(sp2.num)}" />
-              <select class="phone-cc-select bulk-p2-cc" data-id="${c.id}">
-                <option value="970"${sp2.cc === "970" ? " selected" : ""}>فلسطين +970</option>
-                <option value="972"${sp2.cc === "972" ? " selected" : ""}>إسرائيل +972</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <span class="bulk-field-lbl">الحد المسموح (0 = بدون حد):</span>
-            <input type="number" class="bulk-lim-input" data-id="${c.id}" min="0" step="any" inputmode="decimal" value="${getCustomerLimit(c)}" />
-          </div>
-        </div>
-      </div>
-    `;
-  }).join("");
-
-  container.querySelectorAll(".bulk-card-item").forEach(card => {
-    const id = card.dataset.bc;
-    const p1Num = card.querySelector(".bulk-p1-num");
-    const p1CC = card.querySelector(".bulk-p1-cc");
-    const p2Num = card.querySelector(".bulk-p2-num");
-    const p2CC = card.querySelector(".bulk-p2-cc");
-    const limInp = card.querySelector(".bulk-lim-input");
-
-    const savePhoneSlot = (slot, inp, cc) => {
-      const cust = state.customers.find(x => x.id === id);
-      if (!cust) return;
-      const v = sanitizePhoneInputEl(inp, cc);
-      if (v.length === 0) {
-        cust[slot] = "";
-        saveState();
-        renderCustomers();
-        showToast(`✓ تم مسح رقم ${cust.name}`);
-      } else if (v.length === 9) {
-        cust[slot] = cc.value + v;
-        saveState();
-        renderCustomers();
-        showToast(`✓ تم حفظ رقم ${cust.name}`);
-      }
-    };
-
-    bindStrictPhoneInput(p1Num, p1CC, () => savePhoneSlot("phone", p1Num, p1CC));
-    p1CC.onchange = () => savePhoneSlot("phone", p1Num, p1CC);
-    bindStrictPhoneInput(p2Num, p2CC, () => savePhoneSlot("phone2", p2Num, p2CC));
-    p2CC.onchange = () => savePhoneSlot("phone2", p2Num, p2CC);
-
-    limInp.onchange = () => {
-      const cust = state.customers.find(x => x.id === id);
-      if (!cust) return;
-      const num = parseFloat(arDigitsToEn(limInp.value));
-      if (!isNaN(num) && num >= 0) {
-        cust.limit = num;
-        saveState();
-        updateHeaderStats();
-        renderCustomers();
-        showToast(`✓ تم تحديث الحد المسموح لـ ${cust.name}`);
-      }
-    };
-  });
-}
-
-function importBulkTextList() {
-  const txtEl = document.getElementById("bulkText");
-  const raw = txtEl.value.trim();
-  if (!raw) return;
-
-  const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-  let count = 0;
-  const today = todayStr();
-  const nowTime = formatTimeNow();
-
-  lines.forEach(line => {
-    const normLine = arDigitsToEn(line);
-    let name = "", phone = "", amount = 0, limit = Number(state.settings.defaultLimit) || 0;
-
-    if (normLine.includes("|")) {
-      const parts = normLine.split("|").map(p => p.trim());
-      name = parts[0] || "";
-      phone = cleanImportedPhone(parts[1] || "");
-      amount = parseFloat(parts[2]) || 0;
-      limit = parts[3] !== undefined && parts[3] !== "" ? (parseFloat(parts[3]) || 0) : limit;
-    } else {
-      const m = normLine.match(/(\d+(?:\.\d+)?)\s*$/);
-      if (m) {
-        amount = parseFloat(m[1]);
-        name = normLine.slice(0, m.index).trim();
-      } else {
-        name = normLine;
-      }
-    }
-    if (!name) return;
-
-    let cust = state.customers.find(c => normAr(c.name) === normAr(name));
-    if (!cust) {
-      cust = { id: uid("c"), name, phone, phone2: "", limit, tx: [] };
-      state.customers.push(cust);
-    } else {
-      if (phone) cust.phone = phone;
-      if (normLine.includes("|")) cust.limit = limit;
-    }
-
-    if (amount > 0) {
-      cust.tx.push({
-        id: uid("t"),
-        type: "debt",
-        amount: Math.round(amount * 100) / 100,
-        note: "استيراد رصيد",
-        date: today,
-        time: nowTime,
-        ts: Date.now()
-      });
-    }
-    count++;
-  });
-
-  if (count > 0) {
-    saveState();
-    renderAll();
-    txtEl.value = "";
-    showToast(`✓ تم استيراد وتحديث ${count} حساب بنجاح`);
-  }
-}
-
-/* ==================== الإعدادات، نصوص التذكير، وقفل PIN ==================== */
-
-function syncSettingsInputs() {
-  document.getElementById("shopNameInput").value = state.settings.shopName || "";
-  document.getElementById("currencyInput").value = state.settings.currency || "₪";
-  document.getElementById("defaultLimitInput").value = state.settings.defaultLimit;
-  document.getElementById("overdueDaysInput").value = state.settings.overdueDays || 30;
-  document.getElementById("tplFriendlyInput").value = (state.settings.tpl && state.settings.tpl.friendly) || DEFAULT_TPL.friendly;
-  document.getElementById("tplLimitInput").value = (state.settings.tpl && state.settings.tpl.limit) || DEFAULT_TPL.limit;
-  updatePinUi();
-}
-
-function saveGeneralSettings() {
-  const shop = document.getElementById("shopNameInput").value.trim() || "دفتر الديون الذكي";
-  const cur = document.getElementById("currencyInput").value.trim() || "₪";
-  const lim = parseFloat(arDigitsToEn(document.getElementById("defaultLimitInput").value));
-  const days = parseInt(arDigitsToEn(document.getElementById("overdueDaysInput").value), 10);
-
-  state.settings.shopName = shop;
-  state.settings.currency = cur;
-  if (!isNaN(lim) && lim >= 0) state.settings.defaultLimit = lim;
-  if (!isNaN(days) && days >= 1) state.settings.overdueDays = days;
-
-  saveState();
-  renderAll();
-  showToast("✓ تم حفظ الإعدادات العامة");
-}
-
-function saveTemplatesSettings() {
-  const tf = document.getElementById("tplFriendlyInput").value.trim() || DEFAULT_TPL.friendly;
-  const tl = document.getElementById("tplLimitInput").value.trim() || DEFAULT_TPL.limit;
-  state.settings.tpl = { friendly: tf, limit: tl };
-  saveState();
-  showToast("✓ تم حفظ نصوص التذكير");
-}
-
-function hashPin(p) {
-  let h = 0;
-  const str = arDigitsToEn(String(p || ""));
-  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
-  return "h" + h;
-}
-
-function updatePinUi() {
-  const active = !!state.settings.pinHash;
-  const badge = document.getElementById("pinStatusBadge");
-  const lockBtn = document.getElementById("headerLockBtn");
-  const disableBtn = document.getElementById("disablePinBtn");
-  if (badge) {
-    badge.textContent = active ? "مفعل 🔒" : "غير مفعل";
-    badge.className = active ? "badge badge-success" : "badge badge-info";
-  }
-  if (lockBtn) lockBtn.hidden = !active;
-  if (disableBtn) disableBtn.disabled = !active;
-}
-
-function openPinSetupModal() {
-  showGenericModal("🔑 تعيين / تغيير رمز PIN", `
-    <div class="form-group">
-      <label for="newPin1">أدخل رمز PIN الجديد (4 إلى 8 أرقام):</label>
-      <input type="password" id="newPin1" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="••••" autocomplete="off" />
-    </div>
-    <div class="form-group">
-      <label for="newPin2">تأكيد رمز PIN:</label>
-      <input type="password" id="newPin2" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="••••" autocomplete="off" />
-    </div>
-    <div id="pinSetupErr" class="form-err" hidden></div>
-    <div class="grid-2">
-      <button type="button" class="btn btn-primary" id="savePinBtn">حفظ الرمز</button>
-      <button type="button" class="btn btn-outline" onclick="closeModal('genericModal')">إلغاء</button>
-    </div>
-  `);
-  document.getElementById("savePinBtn").onclick = () => {
-    const p1 = arDigitsToEn(document.getElementById("newPin1").value).replace(/\D/g, "");
-    const p2 = arDigitsToEn(document.getElementById("newPin2").value).replace(/\D/g, "");
-    const err = document.getElementById("pinSetupErr");
-    if (p1.length < 4) {
-      err.textContent = "يجب أن يتكون الرمز من 4 أرقام على الأقل.";
-      err.hidden = false;
-      return;
-    }
-    if (p1 !== p2) {
-      err.textContent = "الرمزان غير متطابقين.";
-      err.hidden = false;
-      return;
-    }
-    state.settings.pinHash = hashPin(p1);
-    saveState();
-    updatePinUi();
-    closeModal("genericModal");
-    showToast("✓ تم تفعيل قفل PIN بنجاح");
-  };
-}
-
-function disablePinLock() {
-  if (!state.settings.pinHash) return;
-  showGenericModal("🔓 إلغاء قفل PIN", `
-    <p style="font-size:0.86rem; margin-bottom:12px;">هل تريد إلغاء قفل التطبيق برمز PIN؟</p>
-    <div class="grid-2">
-      <button type="button" class="btn btn-danger" id="confirmDisablePin">نعم، ألغِ القفل</button>
-      <button type="button" class="btn btn-outline" onclick="closeModal('genericModal')">إلغاء</button>
-    </div>
-  `);
-  document.getElementById("confirmDisablePin").onclick = () => {
-    state.settings.pinHash = null;
-    saveState();
-    updatePinUi();
-    closeModal("genericModal");
-    showToast("✓ تم إلغاء قفل PIN");
-  };
-}
-
-function lockAppNow() {
-  if (!state.settings.pinHash) return;
-  document.getElementById("pinInput").value = "";
-  document.getElementById("pinErr").textContent = "";
-  document.getElementById("lockScreen").hidden = false;
-  document.getElementById("appShell").hidden = true;
-  setTimeout(() => document.getElementById("pinInput").focus(), 60);
-}
-
-function tryUnlockPin() {
-  const val = arDigitsToEn(document.getElementById("pinInput").value).replace(/\D/g, "");
-  if (hashPin(val) === state.settings.pinHash) {
-    document.getElementById("lockScreen").hidden = true;
-    document.getElementById("appShell").hidden = false;
-    document.getElementById("pinInput").value = "";
-    renderAll();
-  } else {
-    document.getElementById("pinErr").textContent = "رمز خاطئ، حاول مرة أخرى";
-    document.getElementById("pinInput").value = "";
-    document.getElementById("pinInput").focus();
-  }
-}
-
-/* ==================== مولّد وقارئ Excel الحقيقي (.xlsx) بكود JS خالص ==================== */
-
-const CRC_TABLE = (() => {
-  const t = new Uint32Array(256);
-  for (let n = 0; n < 256; n++) {
-    let c = n;
-    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
-    t[n] = c >>> 0;
-  }
-  return t;
-})();
-
-function crc32(bytes) {
-  let c = 0xFFFFFFFF;
-  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
-  return (c ^ 0xFFFFFFFF) >>> 0;
-}
-
-function xmlEsc(s) {
-  return String(s == null ? "" : s)
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "")
-    .replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" }[m]));
-}
-
-function colLetter(idx) {
-  let s = "", n = idx + 1;
-  while (n > 0) {
-    const r = (n - 1) % 26;
-    s = String.fromCharCode(65 + r) + s;
-    n = Math.floor((n - 1) / 26);
-  }
-  return s;
-}
-
-function colToIdx(ref) {
-  const m = String(ref || "").match(/^([A-Z]+)/i);
-  if (!m) return 0;
-  let idx = 0;
-  const letters = m[1].toUpperCase();
-  for (let i = 0; i < letters.length; i++) idx = idx * 26 + (letters.charCodeAt(i) - 64);
-  return idx - 1;
-}
-
-function makeZip(files) {
-  const enc = new TextEncoder();
-  const localParts = [];
-  const centralParts = [];
-  let offset = 0;
-  const now = new Date();
-  const dosTime = ((now.getHours() & 31) << 11) | ((now.getMinutes() & 63) << 5) | ((now.getSeconds() >> 1) & 31);
-  const dosDate = (((Math.max(1980, now.getFullYear()) - 1980) & 127) << 9) | (((now.getMonth() + 1) & 15) << 5) | (now.getDate() & 31);
-
-  files.forEach(({ name, content }) => {
-    const nameBytes = enc.encode(name);
-    const dataBytes = (content instanceof Uint8Array) ? content : enc.encode(content);
-    const crc = crc32(dataBytes);
-
-    const lh = new Uint8Array(30 + nameBytes.length);
-    const ldv = new DataView(lh.buffer);
-    ldv.setUint32(0, 0x04034b50, true);
-    ldv.setUint16(4, 20, true);
-    ldv.setUint16(6, 0x0800, true);
-    ldv.setUint16(8, 0, true);
-    ldv.setUint16(10, dosTime, true);
-    ldv.setUint16(12, dosDate, true);
-    ldv.setUint32(14, crc, true);
-    ldv.setUint32(18, dataBytes.length, true);
-    ldv.setUint32(22, dataBytes.length, true);
-    ldv.setUint16(26, nameBytes.length, true);
-    ldv.setUint16(28, 0, true);
-    lh.set(nameBytes, 30);
-    localParts.push(lh, dataBytes);
-
-    const ch = new Uint8Array(46 + nameBytes.length);
-    const cdv = new DataView(ch.buffer);
-    cdv.setUint32(0, 0x02014b50, true);
-    cdv.setUint16(4, 20, true);
-    cdv.setUint16(6, 20, true);
-    cdv.setUint16(8, 0x0800, true);
-    cdv.setUint16(10, 0, true);
-    cdv.setUint16(12, dosTime, true);
-    cdv.setUint16(14, dosDate, true);
-    cdv.setUint32(16, crc, true);
-    cdv.setUint32(20, dataBytes.length, true);
-    cdv.setUint32(24, dataBytes.length, true);
-    cdv.setUint16(28, nameBytes.length, true);
-    cdv.setUint16(30, 0, true);
-    cdv.setUint16(32, 0, true);
-    cdv.setUint16(34, 0, true);
-    cdv.setUint16(36, 0, true);
-    cdv.setUint32(38, 0, true);
-    cdv.setUint32(42, offset, true);
-    ch.set(nameBytes, 46);
-    centralParts.push(ch);
-
-    offset += lh.length + dataBytes.length;
-  });
-
-  const centralSize = centralParts.reduce((a, b) => a + b.length, 0);
-  const eocd = new Uint8Array(22);
-  const edv = new DataView(eocd.buffer);
-  edv.setUint32(0, 0x06054b50, true);
-  edv.setUint16(4, 0, true);
-  edv.setUint16(6, 0, true);
-  edv.setUint16(8, files.length, true);
-  edv.setUint16(10, files.length, true);
-  edv.setUint32(12, centralSize, true);
-  edv.setUint32(16, offset, true);
-  edv.setUint16(20, 0, true);
-
-  const out = new Uint8Array(offset + centralSize + 22);
-  let pos = 0;
-  localParts.forEach(p => { out.set(p, pos); pos += p.length; });
-  centralParts.forEach(p => { out.set(p, pos); pos += p.length; });
-  out.set(eocd, pos);
-  return out;
-}
-
-function buildStylesXml() {
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <numFmts count="1">
-    <numFmt numFmtId="164" formatCode="#,##0.00"/>
-  </numFmts>
-  <fonts count="5">
-    <font><sz val="11"/><color rgb="FF0F172A"/><name val="Tahoma"/></font>
-    <font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Tahoma"/></font>
-    <font><b/><sz val="11"/><color rgb="FFDC2626"/><name val="Tahoma"/></font>
-    <font><b/><sz val="11"/><color rgb="FF16A34A"/><name val="Tahoma"/></font>
-    <font><b/><sz val="11"/><color rgb="FF115E59"/><name val="Tahoma"/></font>
-  </fonts>
-  <fills count="5">
-    <fill><patternFill patternType="none"/></fill>
-    <fill><patternFill patternType="gray125"/></fill>
-    <fill><patternFill patternType="solid"><fgColor rgb="FF0F766E"/><bgColor indexed="64"/></patternFill></fill>
-    <fill><patternFill patternType="solid"><fgColor rgb="FFF8FAFC"/><bgColor indexed="64"/></patternFill></fill>
-    <fill><patternFill patternType="solid"><fgColor rgb="FFCCFBF1"/><bgColor indexed="64"/></patternFill></fill>
-  </fills>
-  <borders count="3">
-    <border><left/><right/><top/><bottom/><diagonal/></border>
-    <border>
-      <left style="thin"><color rgb="FFCBD5E1"/></left>
-      <right style="thin"><color rgb="FFCBD5E1"/></right>
-      <top style="thin"><color rgb="FFCBD5E1"/></top>
-      <bottom style="thin"><color rgb="FFCBD5E1"/></bottom>
-      <diagonal/>
-    </border>
-    <border>
-      <left style="thin"><color rgb="FF0F766E"/></left>
-      <right style="thin"><color rgb="FF0F766E"/></right>
-      <top style="medium"><color rgb="FF0F766E"/></top>
-      <bottom style="medium"><color rgb="FF0F766E"/></bottom>
-      <diagonal/>
-    </border>
-  </borders>
-  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-  <cellXfs count="11">
-    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center" readingOrder="2"/></xf>
-    <xf numFmtId="0" fontId="1" fillId="2" borderId="2" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1" readingOrder="2"/></xf>
-    <xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
-    <xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center" readingOrder="2"/></xf>
-    <xf numFmtId="164" fontId="0" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
-    <xf numFmtId="164" fontId="2" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
-    <xf numFmtId="164" fontId="3" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
-    <xf numFmtId="0" fontId="4" fillId="4" borderId="2" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center" readingOrder="2"/></xf>
-    <xf numFmtId="164" fontId="4" fillId="4" borderId="2" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
-    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" readingOrder="2"/></xf>
-    <xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" readingOrder="2"/></xf>
-  </cellXfs>
-</styleSheet>`;
-}
-
-function buildWorksheetXml(sheet) {
-  const colsXml = `<cols>${sheet.widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("")}</cols>`;
-  const rowsXml = sheet.rows.map((row, rIdx) => {
-    const rNum = rIdx + 1;
-    const ht = rIdx === 0 ? 28 : 22;
-    const cellsXml = row.map((cell, cIdx) => {
-      const ref = colLetter(cIdx) + rNum;
-      const val = (cell && typeof cell === "object") ? cell.v : cell;
-      const st = (cell && typeof cell === "object" && cell.s != null) ? cell.s : (rIdx === 0 ? 1 : (rIdx % 2 === 0 ? 3 : 0));
-      if (val === "" || val == null) return `<c r="${ref}" s="${st}"/>`;
-      if (typeof val === "number" && isFinite(val)) return `<c r="${ref}" s="${st}"><v>${val}</v></c>`;
-      return `<c r="${ref}" t="inlineStr" s="${st}"><is><t>${xmlEsc(val)}</t></is></c>`;
-    }).join("");
-    return `<row r="${rNum}" ht="${ht}" customHeight="1">${cellsXml}</row>`;
-  }).join("");
-  const lastCol = colLetter(sheet.widths.length - 1);
-  const af = sheet.rows.length > 1 ? `<autoFilter ref="A1:${lastCol}${sheet.rows.length}"/>` : "";
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <sheetViews><sheetView workbookViewId="0" rightToLeft="1"${sheet.selected ? ' tabSelected="1"' : ""}><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
-  <sheetFormatPr defaultRowHeight="22"/>
-  ${colsXml}
-  <sheetData>${rowsXml}</sheetData>
-  ${af}
-</worksheet>`;
-}
-
-function buildXlsxBytes(sheets) {
-  const ctOverrides = sheets.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("");
-  const wbSheets = sheets.map((s, i) => `<sheet name="${xmlEsc(s.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join("");
-  const wbRels = sheets.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join("");
-  const styleRelId = `rId${sheets.length + 1}`;
-
-  const files = [
-    { name: "[Content_Types].xml", content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${ctOverrides}</Types>` },
-    { name: "_rels/.rels", content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>` },
-    { name: "xl/workbook.xml", content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${wbSheets}</sheets></workbook>` },
-    { name: "xl/_rels/workbook.xml.rels", content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${wbRels}<Relationship Id="${styleRelId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>` },
-    { name: "xl/styles.xml", content: buildStylesXml() }
-  ];
-  sheets.forEach((s, i) => {
-    files.push({ name: `xl/worksheets/sheet${i + 1}.xml`, content: buildWorksheetXml({ ...s, selected: i === 0 }) });
-  });
-  return makeZip(files);
-}
-
-// ورقة 1: سجل العمليات (العمود A: اسم الزبون، B: المبلغ، C: النوع، D: رقم الجوال 1، E: رقم الجوال 2، F: التاريخ، G: الصنف والملاحظة، H: الحد المسموح)
-function buildTxSheet(name) {
-  const rows = [[
-    "اسم الزبون", "المبلغ", "النوع", "رقم الجوال 1", "رقم الجوال 2", "التاريخ", "الصنف والملاحظة", "الحد المسموح"
-  ]];
-  let rIdx = 1;
-  state.customers.forEach(c => {
-    const p1 = c.phone ? ("+" + c.phone) : "";
-    const p2 = c.phone2 ? ("+" + c.phone2) : "";
-    const lim = getCustomerLimit(c);
-    if (!c.tx || !c.tx.length) {
-      const even = rIdx % 2 === 0;
-      rows.push([
-        { v: c.name, s: even ? 3 : 0 },
-        { v: "", s: even ? 4 : 2 },
-        { v: "", s: even ? 10 : 9 },
-        { v: p1, s: even ? 10 : 9 },
-        { v: p2, s: even ? 10 : 9 },
-        { v: "", s: even ? 10 : 9 },
-        { v: "", s: even ? 3 : 0 },
-        { v: lim, s: even ? 4 : 2 }
-      ]);
-      rIdx++;
-      return;
-    }
-    c.tx.forEach(t => {
-      const even = rIdx % 2 === 0;
-      const isDebt = t.type === "debt";
-      rows.push([
-        { v: c.name, s: even ? 3 : 0 },
-        { v: Math.round(Number(t.amount) * 100) / 100, s: isDebt ? 5 : 6 },
-        { v: isDebt ? "دين" : "دفعة", s: even ? 10 : 9 },
-        { v: p1, s: even ? 10 : 9 },
-        { v: p2, s: even ? 10 : 9 },
-        { v: t.date || todayStr(), s: even ? 10 : 9 },
-        { v: t.note || "", s: even ? 3 : 0 },
-        { v: lim, s: even ? 4 : 2 }
-      ]);
-      rIdx++;
-    });
-  });
-  return { name, widths: [24, 15, 12, 18, 18, 15, 28, 16], rows };
-}
-
-// ورقة 2: ملخص الزبائن (العمود A: اسم الزبون، B: الرصيد الحالي، C: رقم الجوال 1، D: رقم الجوال 2، E: الحد المسموح، F: الحالة)
-function buildSummarySheet(name) {
-  const rows = [[
-    "اسم الزبون", "الرصيد الحالي", "رقم الجوال 1", "رقم الجوال 2", "الحد المسموح", "الحالة"
-  ]];
-  let sumBal = 0;
-  const sorted = [...state.customers].sort((a, b) => getCustomerBalance(b) - getCustomerBalance(a));
-  sorted.forEach((c, i) => {
-    const s = getCustomerStats(c);
-    sumBal += s.balance;
-    const status = s.limitReached ? "وصل للحد المسموح" : s.nearLimit ? "اقترب من الحد" : s.overdue ? "متأخر" : "سليم";
-    const even = (i + 1) % 2 === 0;
-    rows.push([
-      { v: c.name, s: even ? 3 : 0 },
-      { v: s.balance, s: s.balance > 0 ? 5 : 6 },
-      { v: c.phone ? ("+" + c.phone) : "", s: even ? 10 : 9 },
-      { v: c.phone2 ? ("+" + c.phone2) : "", s: even ? 10 : 9 },
-      { v: s.limit, s: even ? 4 : 2 },
-      { v: status, s: even ? 10 : 9 }
-    ]);
-  });
-  rows.push([
-    { v: "الإجمالي العام", s: 7 },
-    { v: Math.round(sumBal * 100) / 100, s: 8 },
-    { v: "", s: 7 },
-    { v: "", s: 7 },
-    { v: "", s: 7 },
-    { v: sorted.length + " زبون", s: 7 }
-  ]);
-  return { name, widths: [24, 18, 18, 18, 16, 20], rows };
-}
-
-function downloadBlob(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1500);
-}
-
-function exportXlsx(mode) {
-  const sheets = mode === "report"
-    ? [buildSummarySheet("ملخص الزبائن"), buildTxSheet("سجل العمليات")]
-    : [buildTxSheet("سجل العمليات"), buildSummarySheet("ملخص الزبائن")];
-  const bytes = buildXlsxBytes(sheets);
-  const fn = (mode === "report" ? "كشف_الديون_مرتب_" : "نسخة_احتياطية_الديون_") + todayStr() + ".xlsx";
-  downloadBlob(new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), fn);
-  showToast("✓ تم تصدير ملف Excel (.xlsx) بنجاح");
-}
-
-// قارئ ZIP و XLSX بدون مكتبات خارجية
-async function unzipEntries(arrayBuffer) {
-  const bytes = new Uint8Array(arrayBuffer);
-  const dv = new DataView(arrayBuffer);
-  let eocdOffset = -1;
-  for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 65558); i--) {
-    if (dv.getUint32(i, true) === 0x06054b50) { eocdOffset = i; break; }
-  }
-  if (eocdOffset < 0) throw new Error("Invalid ZIP");
-  const cdCount = dv.getUint16(eocdOffset + 10, true);
-  let cdOff = dv.getUint32(eocdOffset + 16, true);
-  const entries = new Map();
-  const dec = new TextDecoder("utf-8");
-
-  for (let i = 0; i < cdCount; i++) {
-    if (dv.getUint32(cdOff, true) !== 0x02014b50) break;
-    const method = dv.getUint16(cdOff + 10, true);
-    const compSize = dv.getUint32(cdOff + 20, true);
-    const nameLen = dv.getUint16(cdOff + 28, true);
-    const extraLen = dv.getUint16(cdOff + 30, true);
-    const commentLen = dv.getUint16(cdOff + 32, true);
-    const lhOff = dv.getUint32(cdOff + 42, true);
-    const name = dec.decode(bytes.subarray(cdOff + 46, cdOff + 46 + nameLen));
-    cdOff += 46 + nameLen + extraLen + commentLen;
-
-    const lNameLen = dv.getUint16(lhOff + 26, true);
-    const lExtraLen = dv.getUint16(lhOff + 28, true);
-    const dataStart = lhOff + 30 + lNameLen + lExtraLen;
-    entries.set(name, { method, raw: bytes.subarray(dataStart, dataStart + compSize) });
-  }
-
-  async function readText(path) {
-    const e = entries.get(path);
-    if (!e) return null;
-    if (e.method === 0) return dec.decode(e.raw);
-    if (e.method === 8 && typeof DecompressionStream !== "undefined") {
-      const ds = new DecompressionStream("deflate-raw");
-      const stream = new Blob([e.raw]).stream().pipeThrough(ds);
-      return await new Response(stream).text();
-    }
-    throw new Error("Unsupported compression");
-  }
-  return { entries, readText };
-}
-
-function excelDateToStr(val) {
-  const n = Number(val);
-  if (isFinite(n) && n > 25000 && n < 80000) {
-    const utcDays = Math.floor(n - 25569);
-    const dt = new Date(utcDays * 86400000);
-    return dt.getUTCFullYear() + "-" + String(dt.getUTCMonth() + 1).padStart(2, "0") + "-" + String(dt.getUTCDate()).padStart(2, "0");
-  }
-  const s = String(val || "").trim().slice(0, 10);
-  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : todayStr();
-}
-
-function parseSheetXmlToRows(xmlText, sharedStrings) {
-  const doc = new DOMParser().parseFromString(xmlText, "application/xml");
-  return Array.from(doc.getElementsByTagName("row")).map(rEl => {
-    const row = [];
-    Array.from(rEl.getElementsByTagName("c")).forEach(cEl => {
-      const idx = colToIdx(cEl.getAttribute("r"));
-      const t = cEl.getAttribute("t");
-      let val = "";
-      if (t === "s") {
-        const vEl = cEl.getElementsByTagName("v")[0];
-        const sIdx = vEl ? parseInt(vEl.textContent, 10) : -1;
-        val = (sIdx >= 0 && sharedStrings[sIdx] != null) ? sharedStrings[sIdx] : "";
-      } else if (t === "inlineStr") {
-        val = Array.from(cEl.getElementsByTagName("t")).map(x => x.textContent || "").join("");
-      } else {
-        const vEl = cEl.getElementsByTagName("v")[0];
-        val = vEl ? (vEl.textContent || "") : "";
-      }
-      row[idx] = val;
-    });
-    return row;
-  }).filter(r => r.some(v => String(v || "").trim() !== ""));
-}
-
-function parseCsvRows(text) {
-  text = text.replace(/^\uFEFF/, "");
-  return text.split(/\r?\n/).filter(l => l.trim().length > 0).map(line => {
-    const cells = [];
-    let cur = "", q = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (q) {
-        if (ch === '"') {
-          if (line[i + 1] === '"') { cur += '"'; i++; }
-          else q = false;
-        } else cur += ch;
-      } else {
-        if (ch === '"') q = true;
-        else if (ch === ",") { cells.push(cur); cur = ""; }
-        else cur += ch;
-      }
-    }
-    cells.push(cur);
-    return cells;
-  });
-}
-
-function rowsToCustomers(rows) {
-  if (!rows || rows.length < 2) return [];
-  const hdr = rows[0].map(h => normAr(h));
-  const findCol = (keywords, fallback) => {
-    const idx = hdr.findIndex(h => keywords.some(k => h.includes(normAr(k))));
-    return idx >= 0 ? idx : fallback;
-  };
-
-  const cName = findCol(["الاسم", "اسم الزبون"], 0);
-  const cAmt = findCol(["المبلغ", "الرصيد"], 1);
-  const cType = findCol(["النوع"], -1);
-  const cPhone1 = findCol(["جوال 1", "رقم الجوال", "رقم_الجوال", "الهاتف"], 2);
-  const cPhone2 = findCol(["جوال 2", "الثاني", "ثاني"], -1);
-  const cDate = findCol(["التاريخ"], -1);
-  const cNote = findCol(["ملاحظة", "الصنف"], -1);
-  const cLimit = findCol(["الحد"], -1);
-
-  const map = new Map();
-  rows.slice(1).forEach(r => {
-    const name = String(r[cName] || "").trim();
-    if (!name || normAr(name) === normAr("الإجمالي العام")) return;
-
-    const phone = cPhone1 >= 0 ? cleanImportedPhone(r[cPhone1]) : "";
-    const phone2 = cPhone2 >= 0 ? cleanImportedPhone(r[cPhone2]) : "";
-    const limitVal = cLimit >= 0 ? parseFloat(arDigitsToEn(r[cLimit])) : NaN;
-    const limit = (!isNaN(limitVal) && limitVal >= 0) ? limitVal : (Number(state.settings.defaultLimit) || 0);
-
-    const key = normAr(name);
-    if (!map.has(key)) {
-      map.set(key, { id: uid("c"), name, phone, phone2, limit, tx: [] });
-    }
-    const cust = map.get(key);
-    if (!cust.phone && phone) cust.phone = phone;
-    if (!cust.phone2 && phone2) cust.phone2 = phone2;
-
-    const rawAmt = cAmt >= 0 ? r[cAmt] : "";
-    const amtNum = parseFloat(arDigitsToEn(rawAmt));
-    if (rawAmt !== "" && rawAmt != null && !isNaN(amtNum) && amtNum !== 0) {
-      const typeStr = cType >= 0 ? normAr(r[cType]) : "";
-      let txType = "debt";
-      if (typeStr.includes("دفع") || amtNum < 0) txType = "pay";
-      const dStr = (cDate >= 0 && r[cDate]) ? excelDateToStr(r[cDate]) : todayStr();
-      const note = cNote >= 0 ? String(r[cNote] || "").trim() : "";
-      cust.tx.push({
-        id: uid("t"),
-        type: txType,
-        amount: Math.round(Math.abs(amtNum) * 100) / 100,
-        note: note || (txType === "debt" ? "دين" : "دفعة"),
-        date: dStr,
-        time: "",
-        ts: dateStrToTs(dStr)
-      });
-    }
-  });
-  return Array.from(map.values());
-}
-
-async function restoreFromXlsxBuffer(arrayBuffer) {
-  const { entries, readText } = await unzipEntries(arrayBuffer);
-  const sharedStrings = [];
-  const ssXml = await readText("xl/sharedStrings.xml");
-  if (ssXml) {
-    const ssDoc = new DOMParser().parseFromString(ssXml, "application/xml");
-    Array.from(ssDoc.getElementsByTagName("si")).forEach(si => {
-      sharedStrings.push(Array.from(si.getElementsByTagName("t")).map(t => t.textContent || "").join(""));
-    });
-  }
-  const sheetPaths = Array.from(entries.keys()).filter(k => /^xl\/worksheets\/sheet\d+\.xml$/i.test(k)).sort();
-  let chosenRows = null;
-  for (const p of sheetPaths) {
-    const xml = await readText(p);
-    if (!xml) continue;
-    const rows = parseSheetXmlToRows(xml, sharedStrings);
-    if (!rows.length) continue;
-    const joined = rows[0].map(normAr).join(" ");
-    if (joined.includes(normAr("النوع")) && joined.includes(normAr("المبلغ"))) {
-      chosenRows = rows;
-      break;
-    }
-    if (!chosenRows) chosenRows = rows;
-  }
-  return rowsToCustomers(chosenRows);
-}
-
-async function handleExcelRestore(e) {
-  const file = e.target.files[0];
-  e.target.value = "";
-  if (!file) return;
-  try {
-    const buf = await file.arrayBuffer();
-    const u8 = new Uint8Array(buf);
-    const isZip = u8.length > 4 && u8[0] === 0x50 && u8[1] === 0x4B;
-    const list = (isZip || /\.xlsx$/i.test(file.name))
-      ? await restoreFromXlsxBuffer(buf)
-      : rowsToCustomers(parseCsvRows(new TextDecoder("utf-8").decode(buf)));
-
-    if (!list.length) throw new Error("empty");
-
-    showGenericModal("استعادة من نسخة Excel", `
-      <p style="font-size:0.88rem; margin-bottom:14px;">
-        تمت قراءة <b>${list.length} زبون</b> من الملف.<br/>
-        هل تريد استبدال البيانات الحالية بهذه النسخة؟
-      </p>
-      <div class="grid-2">
-        <button type="button" class="btn btn-primary" id="btnConfirmExcelRestore">نعم، استبدل الآن</button>
-        <button type="button" class="btn btn-outline" onclick="closeModal('genericModal')">إلغاء</button>
-      </div>
-    `);
-    document.getElementById("btnConfirmExcelRestore").onclick = () => {
-      state.customers = list;
-      saveState();
-      renderAll();
-      closeModal("genericModal");
-      showToast(`✓ تمت استعادة ${list.length} زبون بنجاح`);
-    };
-  } catch (err) {
-    showToast("⚠️ تعذر قراءة الملف؛ تأكد أنه ملف Excel (.xlsx) أو CSV صالح");
-  }
-}
-
-/* ==================== تصدير واستعادة JSON + مسح البيانات ==================== */
-
-function exportJSON() {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json;charset=utf-8" });
-  downloadBlob(blob, `نسخة_احتياطية_الديون_${todayStr()}.json`);
-  showToast("✓ تم حفظ نسخة JSON الاحتياطية");
-}
-
-function handleJsonRestore(e) {
-  const file = e.target.files[0];
-  e.target.value = "";
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = evt => {
-    try {
-      const parsed = JSON.parse(evt.target.result);
-      if (!parsed || !Array.isArray(parsed.customers)) throw new Error("invalid");
-
-      // دعم ملفات JSON من النسخة المدمجة أو من النسخة السابقة (customers + transactions)
-      let restoredCustomers = [];
-      if (Array.isArray(parsed.transactions)) {
-        const map = new Map();
-        parsed.customers.forEach(c => {
-          const obj = { id: c.id || uid("c"), name: c.name, phone: cleanImportedPhone(c.phone), phone2: cleanImportedPhone(c.phone2), limit: typeof c.limit === "number" ? c.limit : state.settings.defaultLimit, tx: [] };
-          map.set(obj.id, { obj, legacyBalance: Number(c.balance) || 0 });
-          restoredCustomers.push(obj);
-        });
-        parsed.transactions.forEach(t => {
-          const entry = map.get(t.customerId);
-          if (!entry) return;
-          entry.obj.tx.push({
-            id: uid("t"),
-            type: (t.type === "payment" || t.type === "pay") ? "pay" : "debt",
-            amount: Number(t.amount) || 0,
-            note: t.item || t.note || "",
-            date: t.date || todayStr(),
-            time: t.time || "",
-            ts: dateStrToTs(t.date || todayStr())
-          });
-        });
-      } else {
-        restoredCustomers = parsed.customers.map(c => ({
-          id: c.id || uid("c"),
-          name: c.name || "",
-          phone: cleanImportedPhone(c.phone),
-          phone2: cleanImportedPhone(c.phone2),
-          limit: typeof c.limit === "number" ? c.limit : state.settings.defaultLimit,
-          tx: Array.isArray(c.tx) ? c.tx : []
-        }));
-      }
-
-      showGenericModal("استعادة نسخة JSON", `
-        <p style="font-size:0.88rem; margin-bottom:14px;">
-          تمت قراءة <b>${restoredCustomers.length} زبون</b>. هل تريد استبدال البيانات الحالية؟
-        </p>
-        <div class="grid-2">
-          <button type="button" class="btn btn-primary" id="btnConfirmJsonRestore">نعم، استبدل</button>
-          <button type="button" class="btn btn-outline" onclick="closeModal('genericModal')">إلغاء</button>
-        </div>
-      `);
-      document.getElementById("btnConfirmJsonRestore").onclick = () => {
-        if (parsed.settings) {
-          state.settings = Object.assign({}, state.settings, parsed.settings);
-          state.settings.tpl = {
-            friendly: (parsed.settings.tpl && parsed.settings.tpl.friendly) || state.settings.tpl.friendly,
-            limit: (parsed.settings.tpl && parsed.settings.tpl.limit) || state.settings.tpl.limit
-          };
+      const vis = new Uint8Array(rw * rh);
+      const rawBlobs = [];
+      const qx = new Int32Array(rw * rh);
+      const qy = new Int32Array(rw * rh);
+
+      for (let y = 1; y < rh - 1; y++) {
+        for (let x = 1; x < rw - 1; x++) {
+          const p = y * rw + x;
+          if (!bin[p] || vis[p]) continue;
+          let head = 0, tail = 0;
+          qx[tail] = x; qy[tail] = y; tail++;
+          vis[p] = 1;
+          let minX = x, maxX = x, minY = y, maxY = y;
+
+          while (head < tail) {
+            const cx = qx[head], cy = qy[head]; head++;
+            if (cx < minX) minX = cx; if (cx > maxX) maxX = cx;
+            if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+
+            for (let dy = -1; dy <= 1; dy++) {
+              const ny = cy + dy;
+              if (ny < 0 || ny >= rh) continue;
+              for (let dx = -1; dx <= 1; dx++) {
+                const nx = cx + dx;
+                if (nx < 0 || nx >= rw) continue;
+                const np = ny * rw + nx;
+                if (bin[np] && !vis[np]) {
+                  vis[np] = 1;
+                  qx[tail] = nx; qy[tail] = ny; tail++;
+                }
+              }
+            }
+          }
+
+          const bw = maxX - minX + 1, bh = maxY - minY + 1;
+          if (bh >= rh * 0.26 && bh <= rh * 0.88 && bw >= 2 && bw <= rh * 1.5 && tail >= 8) {
+            if (bw / bh > 0.94 && bw >= 10) {
+              const mid = Math.floor((minX + maxX) / 2);
+              rawBlobs.push({ minX, maxX: mid, minY, maxY, bh });
+              rawBlobs.push({ minX: mid + 1, maxX, minY, maxY, bh });
+            } else {
+              rawBlobs.push({ minX, maxX, minY, maxY, bh });
+            }
+          }
         }
-        state.customers = restoredCustomers;
-        saveState();
-        syncSettingsInputs();
-        renderAll();
-        closeModal("genericModal");
-        showToast("✓ تمت استعادة النسخة الاحتياطية بنجاح");
-      };
-    } catch (err) {
-      showToast("⚠️ ملف JSON غير صالح");
+      }
+
+      if (!rawBlobs.length) return '';
+
+      const heights = rawBlobs.map(b => b.bh).sort((a, b) => a - b);
+      const medH = heights[Math.floor(heights.length / 2)];
+      const blobs = rawBlobs
+        .filter(b => b.bh >= medH * 0.72 && b.bh <= medH * 1.32)
+        .sort((a, b) => a.minX - b.minX);
+
+      const W = 16, H = 24;
+      let result = '';
+
+      for (const b of blobs) {
+        const bw = b.maxX - b.minX + 1, bh = b.maxY - b.minY + 1;
+        const aspect = bw / bh;
+        const grid = new Float32Array(W * H);
+
+        for (let gy = 0; gy < H; gy++) {
+          const yStart = b.minY + (gy * bh) / H;
+          const yEnd = b.minY + ((gy + 1) * bh) / H;
+          for (let gx = 0; gx < W; gx++) {
+            const xStart = b.minX + (gx * bw) / W;
+            const xEnd = b.minX + ((gx + 1) * bw) / W;
+            let acc = 0, samples = 0;
+            for (let sy = Math.floor(yStart); sy < Math.ceil(yEnd); sy++) {
+              for (let sx = Math.floor(xStart); sx < Math.ceil(xEnd); sx++) {
+                acc += bin[Math.min(rh - 1, sy) * rw + Math.min(rw - 1, sx)];
+                samples++;
+              }
+            }
+            grid[gy * W + gx] = samples ? acc / samples : 0;
+          }
+        }
+
+        const z = computeZoneFeatures(grid, W, H);
+        let bestDigit = '', bestScore = -999;
+
+        for (const tpl of DIGIT_TEMPLATES) {
+          let dot = 0, normA = 0, normB = 0;
+          for (let k = 0; k < W * H; k++) {
+            dot += grid[k] * tpl.grid[k];
+            normA += grid[k] * grid[k];
+            normB += tpl.grid[k] * tpl.grid[k];
+          }
+          const cosineSim = (normA && normB) ? dot / Math.sqrt(normA * normB) : 0;
+
+          const tz = tpl.zones;
+          const zoneDiff =
+            Math.abs(z.ul - tz.ul) * 1.45 +
+            Math.abs(z.ll - tz.ll) * 1.15 +
+            Math.abs(z.ur - tz.ur) * 1.25 +
+            Math.abs(z.lr - tz.lr) * 1.10 +
+            Math.abs(z.mid - tz.mid) * 0.90;
+
+          const aspectPenalty = Math.abs(aspect - tpl.aspect) * 0.35;
+          const score = cosineSim - zoneDiff - aspectPenalty;
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestDigit = tpl.digit;
+          }
+        }
+        if (bestDigit !== '') result += bestDigit;
+      }
+
+      return result;
     }
-  };
-  reader.readAsText(file);
-}
 
-function resetAllData() {
-  const btn = document.getElementById("resetBtn");
-  if (btn.dataset.confirm !== "1") {
-    btn.dataset.confirm = "1";
-    btn.textContent = "⚠️ اضغط مرة أخرى خلال 4 ثوانٍ لتأكيد المسح النهائي!";
-    clearTimeout(btn._t);
-    btn._t = setTimeout(() => {
-      btn.dataset.confirm = "0";
-      btn.textContent = "🗑️ مسح جميع البيانات والبدء من جديد";
-    }, 4000);
-    return;
-  }
-  btn.dataset.confirm = "0";
-  btn.textContent = "🗑️ مسح جميع البيانات والبدء من جديد";
-  state.customers = [];
-  saveState();
-  renderAll();
-  showToast("✓ تم مسح جميع البيانات والبدء من جديد");
-}
+    function extractFromCanvas(canvas) {
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const w = canvas.width, h = canvas.height;
+      const user = readDigitsInRegion(ctx, w * 0.02, h * 0.30, w * 0.56, h * 0.24);
+      const pass = readDigitsInRegion(ctx, w * 0.02, h * 0.53, w * 0.56, h * 0.24);
+      return { user, pass };
+    }
 
-/* ==================== التنقل وربط الأحداث عند التحميل ==================== */
+    function extractFromDataUrl(dataUrl) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+          const c = document.createElement('canvas');
+          c.width = img.naturalWidth || img.width;
+          c.height = img.naturalHeight || img.height;
+          c.getContext('2d').drawImage(img, 0, 0);
+          resolve(extractFromCanvas(c));
+        };
+        img.onerror = () => resolve({ user: '', pass: '' });
+        img.src = dataUrl;
+      });
+    }
 
-function switchPage(pageId) {
-  if (searchFocusActive) exitSearchFocusMode(false);
-  currentPage = pageId;
-  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  document.getElementById("page-" + pageId).classList.add("active");
-  document.querySelectorAll(".nav-btn").forEach(b => {
-    b.classList.toggle("active", b.dataset.page === pageId);
-  });
-  if (pageId === "daily") renderDailyLog();
-  if (pageId === "bulk") renderBulkManageList();
-  if (pageId === "settings") syncSettingsInputs();
-  window.scrollTo(0, 0);
-}
-
-function initBindings() {
-  // البوت السريع عند الضغط على Enter
-  document.getElementById("botInput").addEventListener("keydown", e => {
-    if (e.key === "Enter") processBot();
-  });
-
-  // وضع البحث الكامل
-  const searchInp = document.getElementById("searchInput");
-  searchInp.addEventListener("focus", enterSearchFocusMode);
-  searchInp.addEventListener("click", enterSearchFocusMode);
-  searchInp.addEventListener("input", renderCustomers);
-
-  // ربط حقول الجوال الصارمة في نافذة زبون جديد
-  const newP1 = document.getElementById("newCustPhone1Num");
-  const newP1CC = document.getElementById("newCustPhone1CC");
-  const newP2 = document.getElementById("newCustPhone2Num");
-  const newP2CC = document.getElementById("newCustPhone2CC");
-  const syncNewP2Vis = () => {
-    const show = newP1.value.trim().length > 0 || newP2.value.trim().length > 0;
-    document.getElementById("newCustPhone2Wrap").hidden = !show;
-  };
-  bindStrictPhoneInput(newP1, newP1CC, syncNewP2Vis);
-  bindStrictPhoneInput(newP2, newP2CC, syncNewP2Vis);
-
-  // ربط حقول الجوال الصارمة في نافذة تعديل الزبون
-  const editP1 = document.getElementById("editCustPhone1Num");
-  const editP1CC = document.getElementById("editCustPhone1CC");
-  const editP2 = document.getElementById("editCustPhone2Num");
-  const editP2CC = document.getElementById("editCustPhone2CC");
-  bindStrictPhoneInput(editP1, editP1CC, autoSaveCustomerMeta);
-  bindStrictPhoneInput(editP2, editP2CC, autoSaveCustomerMeta);
-
-  // شاشة القفل PIN والتعتيم التلقائي للخصوصية
-  document.getElementById("pinInput").addEventListener("keydown", e => {
-    if (e.key === "Enter") tryUnlockPin();
-  });
-  document.addEventListener("visibilitychange", () => {
-    if (!document.getElementById("lockScreen").hidden) return;
-    document.getElementById("appShell").style.filter = document.hidden ? "blur(14px)" : "";
-  });
-
-  // إغلاق النوافذ بالضغط على الخلفية الداكنة
-  document.querySelectorAll(".modal-backdrop").forEach(backdrop => {
-    backdrop.addEventListener("click", e => {
-      if (e.target === backdrop) backdrop.classList.remove("open");
+    // ========================================================
+    // قاعدة البيانات المحلية IndexedDB لحفظ البطاقات وموضع الوصول
+    // ========================================================
+    const dbOp = (mode, fn) => new Promise(res => {
+      const req = indexedDB.open('VeloNetDB', 1);
+      req.onupgradeneeded = e => e.target.result.createObjectStore('s');
+      req.onsuccess = () => {
+        const tx = req.result.transaction('s', mode);
+        const r = fn(tx.objectStore('s'));
+        tx.oncomplete = () => res(r?.result);
+        tx.onerror = () => res(null);
+      };
+      req.onerror = () => res(null);
     });
-  });
-}
 
-// تشغيل التطبيق
-initBindings();
-loadState();
-if (state.settings.pinHash) {
-  lockAppNow();
-}
-</script>
+    const saveDB = () => dbOp('readwrite', s => s.put({ cards, idx, fileName }, 'session'));
+    const loadDB = () => dbOp('readonly', s => s.get('session'));
+    const clearStoredSession = () => dbOp('readwrite', s => s.delete('session'));
+
+    const setBadge = (ok, txt) => {
+      $('engineBadge').textContent = txt;
+      $('engineBadge').className = ok ? 'pill' : 'pill warn';
+    };
+
+    async function ensurePdfEngine() {
+      if (typeof pdfjsLib !== 'undefined') {
+        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js';
+        }
+        setBadge(true, 'محفوظ ويعمل 100% بدون إنترنت');
+        return true;
+      }
+
+      const cached = await dbOp('readonly', s => s.get('pdfEngine'));
+      if (cached?.lib && cached?.worker) {
+        const sc = document.createElement('script');
+        sc.textContent = cached.lib;
+        document.head.appendChild(sc);
+        pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
+          new Blob([cached.worker], { type: 'application/javascript' })
+        );
+        setBadge(true, 'محفوظ ويعمل 100% بدون إنترنت');
+        return true;
+      }
+
+      if (navigator.onLine) {
+        try {
+          setBadge(false, 'جاري حفظ المحرك للعمل أوفلاين...');
+          const base = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174';
+          const [r1, r2] = await Promise.all([fetch(`${base}/pdf.min.js`), fetch(`${base}/pdf.worker.min.js`)]);
+          if (r1.ok && r2.ok) {
+            const lib = await r1.text(), worker = await r2.text();
+            await dbOp('readwrite', s => s.put({ lib, worker }, 'pdfEngine'));
+            const sc = document.createElement('script');
+            sc.textContent = lib;
+            document.head.appendChild(sc);
+            pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
+              new Blob([worker], { type: 'application/javascript' })
+            );
+            setBadge(true, 'تم حفظ المحرك ويعمل بدون إنترنت');
+            return true;
+          }
+        } catch {}
+      }
+
+      setBadge(false, 'اتصل لمرة واحدة لحفظ محرك PDF');
+      return false;
+    }
+
+    // إزالة الملف يدوياً والعودة لشاشة البداية
+    async function resetToStart(showMsg = false) {
+      pdfDoc = null;
+      fileName = '';
+      cards = [];
+      idx = 0;
+      $('fileInput').value = '';
+      $('cardImg').src = '';
+      $('userIn').value = '';
+      $('passIn').value = '';
+      $('subTitle').textContent = 'ارفع ملف PDF لتقطيع البطاقات وقراءة الأرقام تلقائياً';
+
+      $('calSec').classList.add('hidden');
+      $('viewSec').classList.add('hidden');
+      $('mapModal').classList.add('hidden');
+      $('mapBtn').classList.add('hidden');
+      $('clearBtn').classList.add('hidden');
+      $('uploadSec').classList.remove('hidden');
+
+      await clearStoredSession();
+      if (showMsg) toast('تمت إزالة الملف والعودة إلى البداية');
+    }
+
+    $('clearBtn').onclick = () => resetToStart(true);
+
+    // ========================================================
+    // رفع الملف والمعايرة
+    // ========================================================
+    $('pickBtn').onclick = e => { e.stopPropagation(); $('fileInput').click(); };
+    $('uploadSec').onclick = () => $('fileInput').click();
+    $('uploadSec').ondragover = e => { e.preventDefault(); $('uploadSec').classList.add('drag'); };
+    $('uploadSec').ondragleave = () => $('uploadSec').classList.remove('drag');
+    $('uploadSec').ondrop = e => {
+      e.preventDefault(); $('uploadSec').classList.remove('drag');
+      const f = e.dataTransfer.files[0];
+      if (f?.type === 'application/pdf') openPdf(f); else toast('يرجى اختيار ملف PDF');
+    };
+    $('fileInput').onchange = e => { if (e.target.files[0]) openPdf(e.target.files[0]); };
+
+    const cfg = () => ({
+      cols: Math.max(1, +$('colsIn').value || 5),
+      rows: Math.max(1, +$('rowsIn').value || 11),
+      t: Math.max(0, +$('mTop').value || 0), b: Math.max(0, +$('mBot').value || 0),
+      r: Math.max(0, +$('mRight').value || 0), l: Math.max(0, +$('mLeft').value || 0)
+    });
+
+    async function openPdf(file) {
+      const ready = await ensurePdfEngine();
+      if (!ready) return toast('اتصل بالإنترنت لمرة واحدة لحفظ محرك PDF، أو ضع pdf.min.js بجانب الملف');
+      setLoad(true, 'جاري قراءة الملف...', file.name);
+      try {
+        pdfDoc = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+        fileName = file.name;
+        $('subTitle').textContent = `${fileName} (${pdfDoc.numPages} صفحات)`;
+        const page = await pdfDoc.getPage(1);
+        const vp = page.getViewport({ scale: 1.4 });
+        $('previewCanvas').width = vp.width; $('previewCanvas').height = vp.height;
+        await page.render({ canvasContext: $('previewCanvas').getContext('2d'), viewport: vp }).promise;
+        drawGrid();
+        $('uploadSec').classList.add('hidden');
+        $('viewSec').classList.add('hidden');
+        $('calSec').classList.remove('hidden');
+        $('clearBtn').classList.remove('hidden');
+      } catch { toast('تعذر فتح الملف'); }
+      setLoad(false);
+    }
+
+    function drawGrid() {
+      const { cols, rows, t, b, r, l } = cfg();
+      $('totalLbl').textContent = `${cols * rows * (pdfDoc?.numPages || 1)} بطاقة`;
+      const ov = $('gridOverlay'); ov.innerHTML = '';
+      const cw = (100 - l - r) / cols, ch = (100 - t - b) / rows;
+      let n = 1;
+      for (let row = 0; row < rows; row++) {
+        for (let col = cols - 1; col >= 0; col--) {
+          const d = document.createElement('div');
+          d.className = 'cell-guide';
+          d.style.cssText = `left:${l + col * cw}%;top:${t + row * ch}%;width:${cw}%;height:${ch}%`;
+          d.innerHTML = `<span class="cell-num">${n++}</span>`;
+          ov.appendChild(d);
+        }
+      }
+    }
+    ['colsIn','rowsIn','mTop','mBot','mRight','mLeft'].forEach(id => $(id).oninput = drawGrid);
+
+    // ========================================================
+    // التقطيع والقراءة التلقائية والحفظ الفوري
+    // ========================================================
+    $('sliceBtn').onclick = async () => {
+      if (!pdfDoc) return;
+      const { cols, rows, t, b, r, l } = cfg();
+      const out = [];
+      setLoad(true, 'جاري تقطيع البطاقات وقراءة الأرقام...', 'يرجى الانتظار');
+      try {
+        for (let p = 1; p <= pdfDoc.numPages; p++) {
+          $('loadSub').textContent = `صفحة ${p} من ${pdfDoc.numPages}`;
+          const page = await pdfDoc.getPage(p);
+          const vp = page.getViewport({ scale: 2.5 });
+          const cvs = document.createElement('canvas');
+          cvs.width = vp.width; cvs.height = vp.height;
+          await page.render({ canvasContext: cvs.getContext('2d'), viewport: vp }).promise;
+
+          let items = [];
+          try {
+            const tc = await page.getTextContent();
+            items = tc.items.map(it => {
+              const m = pdfjsLib.Util.transform(vp.transform, it.transform);
+              return { str: it.str.trim(), x: m[4], y: m[5] };
+            }).filter(i => i.str);
+          } catch {}
+
+          const sx0 = (l / 100) * vp.width, sy0 = (t / 100) * vp.height;
+          const cw = ((100 - l - r) / 100 * vp.width) / cols;
+          const ch = ((100 - t - b) / 100 * vp.height) / rows;
+
+          for (let row = 0; row < rows; row++) {
+            for (let col = cols - 1; col >= 0; col--) {
+              const x = sx0 + col * cw, y = sy0 + row * ch;
+              const c = document.createElement('canvas');
+              c.width = Math.round(cw); c.height = Math.round(ch);
+              c.getContext('2d').drawImage(cvs, x, y, cw, ch, 0, 0, c.width, c.height);
+
+              const tokens = items
+                .filter(i => i.x >= x + cw * 0.04 && i.x <= x + cw * 0.78 && i.y >= y + ch * 0.28 && i.y <= y + ch * 0.86)
+                .sort((a, b) => a.y - b.y)
+                .flatMap(i => (i.str.match(/[A-Za-z0-9]{2,}/g) || []).filter(w => !/^(velonet|mbps|hr|hrs)$/i.test(w)));
+
+              let user = tokens[0] || '';
+              let pass = tokens[1] || '';
+
+              if (!user || !pass) {
+                const visual = extractFromCanvas(c);
+                if (!user) user = visual.user;
+                if (!pass) pass = visual.pass;
+              }
+
+              out.push({
+                index: out.length + 1,
+                img: c.toDataURL('image/jpeg', 0.90),
+                user,
+                pass,
+                used: false
+              });
+            }
+          }
+        }
+        cards = out; idx = 0;
+        $('calSec').classList.add('hidden');
+        $('viewSec').classList.remove('hidden');
+        $('mapBtn').classList.remove('hidden');
+        $('clearBtn').classList.remove('hidden');
+        await renderCard();
+        await saveDB();
+        toast(`تم تقطيع وحفظ ${cards.length} بطاقة بنجاح`);
+      } catch { toast('حدث خطأ أثناء التقطيع'); }
+      setLoad(false);
+    };
+
+    // ========================================================
+    // عرض البطاقة والتعبئة التلقائية الفورية
+    // ========================================================
+    async function renderCard(forceOcr = false) {
+      if (!cards.length) return;
+      idx = Math.max(0, Math.min(idx, cards.length - 1));
+      const c = cards[idx], used = cards.filter(x => x.used).length;
+
+      $('curIdxLbl').textContent = idx + 1;
+      $('totIdxLbl').textContent = cards.length;
+      $('remLbl').textContent = cards.length - used;
+      $('usedLbl').textContent = used;
+      $('progFill').style.width = `${((idx + 1) / cards.length) * 100}%`;
+      $('badgeNum').textContent = `بطاقة #${c.index}`;
+      $('cardImg').src = c.img;
+
+      $('cardFrame').classList.toggle('is-used', c.used);
+      $('usedOverlay').classList.toggle('hidden', !c.used);
+      $('stateTxt').textContent = c.used ? '✖ كرت مشطوب' : '● متاحة';
+      $('stateTxt').style.color = c.used ? 'var(--danger)' : 'var(--accent)';
+      $('toggleUsedBtn').textContent = c.used ? 'إلغاء الشطب ↺' : 'شطب الكرت يدوياً ✖';
+
+      $('prevBtn').disabled = idx === 0;
+      $('nextBtn').disabled = idx === cards.length - 1;
+
+      if (forceOcr || (!c.user && !c.pass)) {
+        $('fillBadge').textContent = '⏳ جاري قراءة الأرقام...';
+        const visual = await extractFromDataUrl(c.img);
+        if (visual.user || visual.pass) {
+          c.user = visual.user;
+          c.pass = visual.pass;
+          await saveDB();
+        }
+      }
+
+      $('userIn').value = c.user || '';
+      $('passIn').value = c.pass || '';
+      $('fillBadge').textContent = (c.user || c.pass) ? '✨ تمت التعبئة تلقائياً' : '✍️ أدخل البيانات يدوياً';
+    }
+
+    $('reOcrBtn').onclick = async () => {
+      await renderCard(true);
+      toast(cards[idx]?.user ? `تمت القراءة: ${cards[idx].user} / ${cards[idx].pass}` : 'تعذر قراءة الأرقام تلقائياً');
+    };
+
+    $('userIn').oninput = () => { if (cards[idx]) { cards[idx].user = $('userIn').value.trim(); saveDB(); } };
+    $('passIn').oninput = () => { if (cards[idx]) { cards[idx].pass = $('passIn').value.trim(); saveDB(); } };
+
+    const copyVal = async (val, lbl) => {
+      if (!val) return toast(`خانة ${lbl} فارغة`);
+      await navigator.clipboard?.writeText(val);
+      toast(`تم نسخ ${lbl}: ${val}`);
+    };
+    $('copyUser').onclick = () => copyVal($('userIn').value.trim(), 'اسم المستخدم');
+    $('copyPass').onclick = () => copyVal($('passIn').value.trim(), 'كلمة المرور');
+
+    $('connectBtn').onclick = async () => {
+      const user = $('userIn').value.trim(), pass = $('passIn').value.trim();
+      if (!user) return toast('تأكد من إدخال اسم المستخدم');
+      cards[idx].user = user; cards[idx].pass = pass; cards[idx].used = true;
+      await renderCard();
+      await saveDB();
+
+      const f = document.createElement('form');
+      f.method = HTTP_METHOD;
+      f.action = ROUTER_URL;
+      f.target = '_blank';
+      [['username', user], ['password', pass]].forEach(([k, v]) => {
+        const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = v; f.appendChild(i);
+      });
+      document.body.appendChild(f); f.submit(); f.remove();
+      toast('تم الإرسال عبر POST وشطب الكرت');
+    };
+
+    $('toggleUsedBtn').onclick = async () => {
+      cards[idx].used = !cards[idx].used;
+      await renderCard();
+      await saveDB();
+    };
+
+    $('prevBtn').onclick = async () => { if (idx > 0) { idx--; await renderCard(); await saveDB(); } };
+    $('nextBtn').onclick = async () => { if (idx < cards.length - 1) { idx++; await renderCard(); await saveDB(); } };
+
+    $('mapBtn').onclick = () => {
+      $('mapGrid').innerHTML = cards.map((c, i) => `
+        <div class="mini ${i === idx ? 'active' : ''} ${c.used ? 'used' : ''}" onclick="jumpCard(${i})">
+          <b>#${c.index}</b><br>
+          <small style="color:${c.used ? 'var(--danger)' : 'var(--accent)'}">${c.used ? 'مشطوب' : 'متاح'}</small>
+        </div>`).join('');
+      $('mapModal').classList.remove('hidden');
+    };
+    window.jumpCard = async i => { idx = i; await renderCard(); await saveDB(); $('mapModal').classList.add('hidden'); };
+    $('closeMap').onclick = () => $('mapModal').classList.add('hidden');
+
+    // استرجاع آخر بطاقة وصلت إليها تلقائياً عند فتح التطبيق
+    window.addEventListener('DOMContentLoaded', async () => {
+      $('urlIn').value = ROUTER_URL;
+      $('methodIn').value = HTTP_METHOD;
+      localStorage.removeItem('velonet_url');
+      ensurePdfEngine();
+
+      const saved = await loadDB();
+      if (saved?.cards?.length) {
+        cards = saved.cards;
+        idx = Math.min(Math.max(0, saved.idx || 0), cards.length - 1);
+        fileName = saved.fileName || '';
+        $('subTitle').textContent = fileName ? `${fileName} (${cards.length} بطاقة محفوظة)` : 'بطاقات محفوظة محلياً';
+        $('uploadSec').classList.add('hidden');
+        $('calSec').classList.add('hidden');
+        $('viewSec').classList.remove('hidden');
+        $('mapBtn').classList.remove('hidden');
+        $('clearBtn').classList.remove('hidden');
+        await renderCard();
+      }
+    });
+  </script>
 </body>
 </html>
